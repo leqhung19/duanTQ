@@ -1,0 +1,88 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <div class="row g-4 mt-2">
+
+        <div class="col-12">
+            <div class="p-4 rounded-3"
+                 style="background:linear-gradient(135deg,#1565c0,#1976d2);color:white;">
+                <h2 class="fw-bold mb-1">Chào mừng, @User.Identity.Name</h2>
+                <p class="mb-0 opacity-75">
+                    Hệ thống quản trị nội dung — Phố ẩm thực Vĩnh Khánh
+                </p>
+            </div>
+        </div>
+
+        <!-- Card: Điểm thuyết minh -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <div style="font-size:3rem;">📍</div>
+                    <h5 class="card-title mt-2">Điểm thuyết minh</h5>
+                    <p class="card-text text-muted small">
+                        Thêm, sửa, xóa các điểm POI trên phố Vĩnh Khánh
+                    </p>
+                    <a asp-page="/Pois/Index" class="btn btn-primary mt-2">
+                        Quản lý POI
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Audio -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center py-4">
+                    <div style="font-size:3rem;">🎵</div>
+                    <h5 class="card-title mt-2">File Audio</h5>
+                    <p class="card-text text-muted small">
+                        Upload và quản lý file thuyết minh theo ngôn ngữ
+                    </p>
+                    <a asp-page="/Pois/Index" class="btn btn-outline-primary mt-2">
+                        Vào từ POI
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card: Analytics (chỉ Admin) -->
+        @if (User.IsInRole("Admin"))
+        {
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center py-4">
+                        <div style="font-size:3rem;">📊</div>
+                        <h5 class="card-title mt-2">Thống kê</h5>
+                        <p class="card-text text-muted small">
+                            Lượt nghe, top POI, heatmap người dùng
+                        </p>
+                        <a asp-page="/Analytics/Index" class="btn btn-outline-success mt-2">
+                            Xem thống kê
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+}
+else
+{
+    <!-- Chưa đăng nhập -->
+    <div class="text-center py-5">
+        <div style="font-size:4rem;">🍜</div>
+        <h2 class="fw-bold mt-3">Vĩnh Khánh Admin</h2>
+        <p class="text-muted">
+            Hệ thống quản trị nội dung thuyết minh tự động đa ngôn ngữ
+        </p>
+        <a asp-area="Identity" asp-page="/Account/Login"
+               class="btn btn-primary btn-lg mt-2">
+            Đăng nhập để tiếp tục
+        </a>
+    </div>
+}

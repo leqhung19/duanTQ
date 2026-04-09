@@ -1,0 +1,38 @@
+[
+  {
+    "ContainingType": "VinhKhanh.Admin.Controllers.SyncController",
+    "Method": "LogListen",
+    "RelativePath": "api/Sync/log",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "req",
+        "Type": "VinhKhanh.Admin.Controllers.LogListenRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VinhKhanh.Admin.Controllers.SyncController",
+    "Method": "GetPois",
+    "RelativePath": "api/Sync/pois",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "VinhKhanh.Admin.Controllers.SyncController",
+    "Method": "GetVersion",
+    "RelativePath": "api/Sync/version",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  }
+]
