@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Devices.Sensors;
 
 namespace DoAn.Views
 {
@@ -7,17 +8,18 @@ namespace DoAn.Views
     [QueryProperty(nameof(RestaurantName), "Name")]
     public partial class MapPage : ContentPage
     {
-        private double _lat = 10.7583; // Tọa độ mặc định
-        private double _lng = 106.7011;
-        private string _name = "";
+        private double _focusLat = 0;
+        private double _focusLng = 0;
+        private string _focusName = "";
+        private CancellationTokenSource? _gpsCts;
 
         public string Lat
         {
             set
             {
                 if (double.TryParse(value, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var lat))
-                    _lat = lat;
+                    System.Globalization.CultureInfo.InvariantCulture, out var v))
+                    _focusLat = v;
             }
         }
 
@@ -26,81 +28,128 @@ namespace DoAn.Views
             set
             {
                 if (double.TryParse(value, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out var lng))
-                    _lng = lng;
+                    System.Globalization.CultureInfo.InvariantCulture, out var v))
+                    _focusLng = v;
             }
         }
 
         public string RestaurantName
         {
-            set => _name = Uri.UnescapeDataString(value ?? "");
+            set => _focusName = Uri.UnescapeDataString(value ?? "");
         }
 
         public MapPage()
         {
             InitializeComponent();
+            mapWebView.Navigated += OnMapLoaded;
         }
 
-        protected override void OnAppearing()
+        protected override async void OnAppearing()
         {
             base.OnAppearing();
-            LoadMap();
+
+            // Load map từ file offline
+            mapWebView.Source = new UrlWebViewSource
+            {
+                Url = "offline_map.html"
+            };
+
+            // Xin permission GPS
+            await RequestLocationPermission();
         }
 
-        private void LoadMap()
+        protected override void OnDisappearing()
         {
-            var html = GenerateMapHtml(_lat, _lng, _name);
-            var source = new HtmlWebViewSource();
-            source.Html = html;
-            mapWebView.Source = source;
+            base.OnDisappearing();
+            // ✅ Tiết kiệm pin — hủy GPS khi rời trang
+            _gpsCts?.Cancel();
         }
 
-        private string GenerateMapHtml(double lat, double lng, string name)
+        private void OnMapLoaded(object? sender, WebNavigatedEventArgs e)
         {
-            return $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset='utf-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-    <title>Bản đồ</title>
-    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        html, body {{ height: 100%; width: 100%; }}
-        #map {{ height: 100vh; width: 100%; }}
-    </style>
-</head>
-<body>
-    <div id='map'></div>
-    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
-    <script>
-        var lat = {lat.ToString(System.Globalization.CultureInfo.InvariantCulture)};
-        var lng = {lng.ToString(System.Globalization.CultureInfo.InvariantCulture)};
-        var name = '{name}';
+            loadingIndicator.IsVisible = false;
+            loadingIndicator.IsRunning = false;
 
-        var map = L.map('map').setView([lat, lng], 16);
+            // Nếu được gọi từ DetailPage — focus vào quán
+            if (_focusLat != 0 && _focusLng != 0)
+            {
+                var js = $"focusRestaurant({_focusLat.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {_focusLng.ToString(System.Globalization.CultureInfo.InvariantCulture)}, '{_focusName}');";
+                mapWebView.EvaluateJavaScriptAsync(js);
+            }
+            else
+            {
+                // Tự động lấy GPS khi mở map
+                GetLocationOnce();
+            }
+        }
 
-        L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png', {{
-            attribution: '© OpenStreetMap © CARTO',
-            subdomains: 'abcd',
-            maxZoom: 19
-        }}).addTo(map);
+        private async Task RequestLocationPermission()
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
+            if (status != PermissionStatus.Granted)
+                await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+        }
 
-        // Marker trỏ đúng vào quán
-        var marker = L.marker([lat, lng]).addTo(map);
-        marker.bindPopup('<b>' + name + '</b>').openPopup();
+        private async void GetLocationOnce()
+        {
+            try
+            {
+                _gpsCts = new CancellationTokenSource();
 
-        // Vòng tròn highlight
-        L.circle([lat, lng], {{
-            color: '#FF5722',
-            fillColor: '#FF5722',
-            fillOpacity: 0.2,
-            radius: 100
-        }}).addTo(map);
-    </script>
-</body>
-</html>";
+                // ✅ Tiết kiệm pin: dùng Low accuracy (mạng/wifi thay GPS)
+                // Chuyển sang Medium/Best nếu cần chính xác hơn
+                var request = new GeolocationRequest(
+                    GeolocationAccuracy.Low,        // Tiết kiệm pin
+                    TimeSpan.FromSeconds(10)         // Timeout 10 giây
+                );
+
+                var location = await Geolocation.Default.GetLocationAsync(request, _gpsCts.Token);
+
+                if (location != null)
+                {
+                    var lat = location.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    var lng = location.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    var acc = ((int)(location.Accuracy ?? 50)).ToString();
+
+                    // Gửi tọa độ vào WebView
+                    await mapWebView.EvaluateJavaScriptAsync(
+                        $"setLocation({lat}, {lng}, {acc});"
+                    );
+                }
+            }
+            catch (FeatureNotSupportedException)
+            {
+                await DisplayAlertAsync("Thông báo", "Thiết bị không hỗ trợ GPS", "OK");
+            }
+            catch (PermissionException)
+            {
+                await DisplayAlertAsync("Thông báo", "Vui lòng cấp quyền vị trí", "OK");
+            }
+            catch (Exception)
+            {
+                // Offline — bỏ qua, map vẫn hiện bình thường
+            }
+        }
+        private async void OnBackClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                // Thử cách 1
+                await Navigation.PopAsync();
+            }
+            catch
+            {
+                try
+                {
+                    // Thử cách 2
+                    await Shell.Current.GoToAsync("..");
+                }
+                catch
+                {
+                    // Thử cách 3
+                    await Shell.Current.Navigation.PopAsync();
+                }
+            }
         }
     }
 }
