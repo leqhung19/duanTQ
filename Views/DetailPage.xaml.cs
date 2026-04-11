@@ -1,4 +1,5 @@
 using DoAn.FRONTEND.Models;
+using DoAn.Services;
 
 namespace DoAn.Views
 {
@@ -6,9 +7,8 @@ namespace DoAn.Views
     public partial class DetailPage : ContentPage
     {
         private Restaurant? _currentRestaurant;
-        private string _selectedLang = "vi"; // Default language
+        private string _selectedLang = "vi";
 
-        // This is the property that was causing the error
         public Restaurant? CurrentRestaurant
         {
             get => _currentRestaurant;
@@ -29,73 +29,74 @@ namespace DoAn.Views
         {
             if (_currentRestaurant == null) return;
 
-            // Set the image and title
-            if (RestaurantImage != null)
-                RestaurantImage.Source = _currentRestaurant.Image;
+            RestaurantImage.Source = _currentRestaurant.Image;
+            NameLabel.Text = _currentRestaurant.Name;
+            OpenTimeLabel.Text = _currentRestaurant.OpenTime ?? "Chưa cập nhật";
+            AddressLabel.Text = _currentRestaurant.Address ?? "Chưa cập nhật";
+            PhoneLabel.Text = _currentRestaurant.Phone ?? "Chưa cập nhật";
+            PriceRangeLabel.Text = _currentRestaurant.PriceRange ?? "Liên hệ";
 
-            if (NameLabel != null)
-                NameLabel.Text = _currentRestaurant.Name;
-
+            // Đồng bộ ngôn ngữ với POIService
+            _selectedLang = POIService.Instance.CurrentLang;
+            UpdateLangButtons(_selectedLang);
             UpdateDescription();
         }
 
-        // Language Button Events
-        private void OnVietnameseClicked(object? sender, EventArgs e) { _selectedLang = "vi"; UpdateDescription(); }
-        private void OnEnglishClicked(object? sender, EventArgs e) { _selectedLang = "en"; UpdateDescription(); }
-        private void OnKoreanClicked(object? sender, EventArgs e) { _selectedLang = "ko"; UpdateDescription(); }
-        private void OnChineseClicked(object? sender, EventArgs e) { _selectedLang = "zh"; UpdateDescription(); }
+        // ============ NGÔN NGỮ ============
+        private void OnVietnameseClicked(object? sender, EventArgs e)
+        { _selectedLang = "vi"; Sync(); }
+        private void OnEnglishClicked(object? sender, EventArgs e)
+        { _selectedLang = "en"; Sync(); }
+        private void OnKoreanClicked(object? sender, EventArgs e)
+        { _selectedLang = "ko"; Sync(); }
+        private void OnChineseClicked(object? sender, EventArgs e)
+        { _selectedLang = "zh"; Sync(); }
+
+        private void Sync()
+        {
+            POIService.Instance.CurrentLang = _selectedLang;
+            UpdateLangButtons(_selectedLang);
+            UpdateDescription();
+        }
+
+        private void UpdateLangButtons(string lang)
+        {
+            var active = Color.FromArgb("#FF5722");
+            var inactive = Color.FromArgb("#E0E0E0");
+            var white = Colors.White;
+            var dark = Color.FromArgb("#212121");
+
+            BtnVi.BackgroundColor = lang == "vi" ? active : inactive;
+            BtnEn.BackgroundColor = lang == "en" ? active : inactive;
+            BtnKr.BackgroundColor = lang == "ko" ? active : inactive;
+            BtnCn.BackgroundColor = lang == "zh" ? active : inactive;
+
+            BtnVi.TextColor = lang == "vi" ? white : dark;
+            BtnEn.TextColor = lang == "en" ? white : dark;
+            BtnKr.TextColor = lang == "ko" ? white : dark;
+            BtnCn.TextColor = lang == "zh" ? white : dark;
+        }
 
         private void UpdateDescription()
         {
-            if (_currentRestaurant == null || DescriptionLabel == null) return;
-
-            // Switch text based on selected language
-            DescriptionLabel.Text = _selectedLang switch
-            {
-                "en" => _currentRestaurant.Description_en,
-                "ko" => _currentRestaurant.Description_kr,
-                "zh" => _currentRestaurant.Description_cn,
-                _ => _currentRestaurant.Description_vi
-            } ?? "No description available.";
+            if (_currentRestaurant == null) return;
+            DescriptionLabel.Text = _currentRestaurant.GetDescription(_selectedLang);
         }
 
         private async void OnPlayAudioClicked(object? sender, EventArgs e)
         {
-            if (DescriptionLabel == null || string.IsNullOrEmpty(DescriptionLabel.Text)) return;
-
-            var locales = await TextToSpeech.Default.GetLocalesAsync();
-
-            // Find the correct voice for the selected language
-            var locale = _selectedLang switch
-            {
-                "en" => locales.FirstOrDefault(l => l.Language.StartsWith("en")),
-                "ko" => locales.FirstOrDefault(l => l.Language.StartsWith("ko")),
-                "zh" => locales.FirstOrDefault(l => l.Language.StartsWith("zh")),
-                _ => locales.FirstOrDefault(l => l.Language.StartsWith("vi"))
-            };
-
-            await TextToSpeech.Default.SpeakAsync(DescriptionLabel.Text, new SpeechOptions { Locale = locale });
+            if (_currentRestaurant == null) return;
+            await POITriggerService.Instance.TriggerPOIAsync(_currentRestaurant, _selectedLang);
         }
-        // Trong DetailPage.xaml.cs
-        public void LoadMockData(int id)
-        {
-            var mockList = new List<Restaurant>
-    {
-        new Restaurant { Id = 101, Name = "Bánh Mì Mock", Description_vi = "Dữ liệu giả để test QR 101" },
-        new Restaurant { Id = 102, Name = "Cơm Tấm Mock", Description_vi = "Dữ liệu giả để test QR 102" }
-    };
 
-            var restaurant = mockList.FirstOrDefault(r => r.Id == id);
-            if (restaurant != null)
-            {
-                BindingContext = restaurant;
-            }
-        }
         private async void OnViewMapClicked(object? sender, EventArgs e)
         {
             if (_currentRestaurant == null) return;
-
-            var route = $"{nameof(RestaurantMapPage)}?Lat={_currentRestaurant.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&Lng={_currentRestaurant.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture)}&Name={Uri.EscapeDataString(_currentRestaurant.Name ?? "")}";
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var route = $"{nameof(RestaurantMapPage)}" +
+                        $"?Lat={_currentRestaurant.Latitude.ToString(ci)}" +
+                        $"&Lng={_currentRestaurant.Longitude.ToString(ci)}" +
+                        $"&Name={Uri.EscapeDataString(_currentRestaurant.Name ?? "")}";
             await Shell.Current.GoToAsync(route);
         }
     }

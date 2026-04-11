@@ -5,6 +5,8 @@ namespace DoAn.Views
 {
     public partial class HomePage : ContentPage
     {
+        private List<Restaurant> _allRestaurants = new();
+
         public HomePage()
         {
             InitializeComponent();
@@ -13,32 +15,63 @@ namespace DoAn.Views
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-
-            // Fetch data from Mock API
-            var restaurants = await MockDataService.GetRestaurantsAsync();
-            RestaurantsCollection.ItemsSource = restaurants;
-            LoadingIndicator.IsRunning = false;
-            LoadingIndicator.IsVisible = false;
+            await LoadDataAsync();
+            await StartPOITrackingAsync();
         }
 
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            // Không stop POI khi chuyển tab
+        }
+
+        private async Task LoadDataAsync()
+        {
+            LoadingIndicator.IsVisible = true;
+            LoadingIndicator.IsRunning = true;
+
+            _allRestaurants = await RestaurantService.Instance.GetAllAsync();
+            RestaurantCollection.ItemsSource = _allRestaurants;
+
+            LoadingIndicator.IsVisible = false;
+            LoadingIndicator.IsRunning = false;
+        }
+
+        private async Task StartPOITrackingAsync()
+        {
+            var status = await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
+            if (status != PermissionStatus.Granted) return;
+
+            POIService.Instance.SetPOIs(_allRestaurants);
+            _ = POIService.Instance.StartTrackingAsync();
+        }
+
+        // Tìm kiếm
+        private void OnSearchChanged(object? sender, TextChangedEventArgs e)
+        {
+            var keyword = e.NewTextValue?.ToLower() ?? "";
+            RestaurantCollection.ItemsSource = string.IsNullOrEmpty(keyword)
+                ? _allRestaurants
+                : _allRestaurants.Where(r =>
+                    (r.Name?.ToLower().Contains(keyword) ?? false) ||
+                    (r.Address?.ToLower().Contains(keyword) ?? false)).ToList();
+        }
+
+        // Chọn quán
         private async void OnRestaurantSelected(object? sender, SelectionChangedEventArgs e)
         {
-            if (e.CurrentSelection.FirstOrDefault() is Restaurant selectedRestaurant)
-            {
-                // Navigate to DetailPage and pass the object
-                var navigationParameter = new Dictionary<string, object>
-                {
-                    { "Restaurant", selectedRestaurant }
-                };
+            if (e.CurrentSelection.FirstOrDefault() is not Restaurant selected) return;
+            (sender as CollectionView)!.SelectedItem = null;
 
-                await Shell.Current.GoToAsync(nameof(DetailPage), navigationParameter);
+            await Shell.Current.GoToAsync(nameof(DetailPage),
+                new Dictionary<string, object> { { "Restaurant", selected } });
+        }
 
-                // Deselect item
-                if (sender is CollectionView collectionView)
-                {
-                    collectionView.SelectedItem = null;
-                }
-            }
+        // Pull to refresh
+        private async void OnRefreshing(object? sender, EventArgs e)
+        {
+            await LoadDataAsync();
+            RefreshView.IsRefreshing = false;
         }
     }
 }

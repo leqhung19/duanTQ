@@ -2,30 +2,39 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="DoAn.Views.RestaurantMapPage"
-             Title="Bản đồ"
              Shell.NavBarIsVisible="False">
     <Grid>
         <WebView x:Name="mapWebView"
                  VerticalOptions="Fill"
-                 HorizontalOptions="Fill" />
+                 HorizontalOptions="Fill"/>
 
         <ActivityIndicator x:Name="loadingIndicator"
-                           IsRunning="True"
-                           IsVisible="True"
+                           IsRunning="True" IsVisible="True"
                            Color="#FF5722"
                            VerticalOptions="Center"
-                           HorizontalOptions="Center" />
+                           HorizontalOptions="Center"/>
 
-        <!-- Nút quay lại bên phải -->
+        <!-- Nút quay lại -->
         <Button Text="✕"
                 Clicked="OnBackClicked"
                 BackgroundColor="#FF5722"
                 TextColor="White"
                 CornerRadius="25"
-                HeightRequest="50"
-                WidthRequest="50"
-                Margin="10"
+                HeightRequest="50" WidthRequest="50"
+                Margin="0,10,16,0"
                 VerticalOptions="Start"
-                HorizontalOptions="End" />
+                HorizontalOptions="End"/>
+
+        <!-- Nút về vị trí hiện tại -->
+        <Button x:Name="LocateBtn"
+                Text="📍"
+                Clicked="OnLocateClicked"
+                BackgroundColor="White"
+                TextColor="#212121"
+                CornerRadius="25"
+                HeightRequest="50" WidthRequest="50"
+                Margin="0,0,16,30"
+                VerticalOptions="End"
+                HorizontalOptions="End"/>
     </Grid>
 </ContentPage>

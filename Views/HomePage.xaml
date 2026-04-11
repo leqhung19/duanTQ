@@ -1,40 +1,78 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:models="clr-namespace:DoAn.FRONTEND.Models"
              x:Class="DoAn.Views.HomePage"
-             Title="Vinh Khanh Food Street">
+             Title="Khám phá">
 
-    <Grid>
-        <CollectionView x:Name="RestaurantsCollection" 
-                        SelectionMode="Single"
-                        SelectionChanged="OnRestaurantSelected"
-                        Margin="10">
-            <CollectionView.ItemTemplate>
-                <DataTemplate x:DataType="models:Restaurant">
-                    <Border Margin="0,5,0,10" 
-                           Padding="0" >
-                        <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="15" />
-                        </Border.StrokeShape>
-                        <Grid RowDefinitions="180, Auto">
-                            <Image Source="{Binding Image}" 
-                                   Aspect="AspectFill" 
-                                   Grid.Row="0" />
+    <Grid RowDefinitions="Auto,*">
 
-                            <StackLayout Grid.Row="1" 
-                                         Padding="15" 
-                                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E1E1E}">
-                                <Label Text="{Binding Name}" 
-                                       FontSize="20" 
-                                       FontAttributes="Bold" />
-                            </StackLayout>
+        <!-- SEARCH BAR -->
+        <SearchBar Grid.Row="0"
+                   x:Name="SearchBar"
+                   Placeholder="Tìm quán ăn..."
+                   TextChanged="OnSearchChanged"
+                   Margin="12,8"
+                   BackgroundColor="White"/>
+
+        <!-- DANH SÁCH QUÁN -->
+        <RefreshView Grid.Row="1"
+                     x:Name="RefreshView"
+                     Refreshing="OnRefreshing">
+            <CollectionView x:Name="RestaurantCollection"
+                            SelectionMode="Single"
+                            SelectionChanged="OnRestaurantSelected"
+                            EmptyView="Không có quán nào">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="12,6" ColumnDefinitions="100,*">
+
+                            <!-- Ảnh -->
+                            <Image Grid.Column="0"
+                                   Source="{Binding Image}"
+                                   HeightRequest="90"
+                                   WidthRequest="90"
+                                   Aspect="AspectFill">
+                                <Image.Clip>
+                                    <RoundRectangleGeometry Rect="0,0,90,90" CornerRadius="10"/>
+                                </Image.Clip>
+                            </Image>
+
+                            <!-- Thông tin -->
+                            <VerticalStackLayout Grid.Column="1"
+                                                 Padding="10,0,0,0"
+                                                 Spacing="4"
+                                                 VerticalOptions="Center">
+                                <Label Text="{Binding Name}"
+                                       FontSize="16"
+                                       FontAttributes="Bold"
+                                       TextColor="#212121"/>
+                                <Label Text="{Binding Address}"
+                                       FontSize="13"
+                                       TextColor="#757575"
+                                       LineBreakMode="TailTruncation"/>
+                                <Label Text="{Binding OpenTime}"
+                                       FontSize="12"
+                                       TextColor="#4CAF50"/>
+                                <Label Text="{Binding PriceRange}"
+                                       FontSize="12"
+                                       TextColor="#FF5722"
+                                       FontAttributes="Bold"/>
+                            </VerticalStackLayout>
+
                         </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
 
-        <ActivityIndicator x:Name="LoadingIndicator" IsRunning="True" HorizontalOptions="Center" VerticalOptions="Center"/>
+        <!-- Loading -->
+        <ActivityIndicator Grid.Row="1"
+                           x:Name="LoadingIndicator"
+                           IsRunning="False"
+                           IsVisible="False"
+                           Color="#FF5722"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center"/>
+
     </Grid>
 </ContentPage>
