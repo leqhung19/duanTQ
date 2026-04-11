@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DoAn.Views.MapPage"
+             Title="Bản đồ"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+        <WebView x:Name="mapWebView"
+                 VerticalOptions="Fill"
+                 HorizontalOptions="Fill" />
+
+        <ActivityIndicator x:Name="loadingIndicator"
+                           IsRunning="True"
+                           IsVisible="True"
+                           Color="#FF5722"
+                           VerticalOptions="Center"
+                           HorizontalOptions="Center" />
+
+        <!-- ✅ Nút quay lại — bên PHẢI -->
+        <Button Text="✕"
+                x:Name="backButton"
+                Clicked="OnBackClicked"
+                BackgroundColor="#FF5722"
+                TextColor="White"
+                CornerRadius="25"
+                HeightRequest="50"
+                WidthRequest="50"
+                Margin="10"
+                VerticalOptions="Start"
+                HorizontalOptions="End" />
+    </Grid>
+</ContentPage>

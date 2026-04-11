@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DoAn.Views.DetailPage"
+             Title="Restaurant Details">
+
+    <ScrollView>
+        <StackLayout Spacing="15">
+            <Image x:Name="RestaurantImage" 
+                   HeightRequest="250" 
+                   Aspect="AspectFill" />
+
+            <StackLayout Padding="20" Spacing="15">
+                <Label x:Name="NameLabel" 
+                       FontSize="26" 
+                       FontAttributes="Bold" />
+
+                <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="10" RowSpacing="10">
+                    <Button Text="Tiếng Việt" Clicked="OnVietnameseClicked" Grid.Row="0" Grid.Column="0" />
+                    <Button Text="English" Clicked="OnEnglishClicked" Grid.Row="0" Grid.Column="1" />
+                    <Button Text="한국어" Clicked="OnKoreanClicked" Grid.Row="1" Grid.Column="0" />
+                    <Button Text="中文" Clicked="OnChineseClicked" Grid.Row="1" Grid.Column="1" />
+                </Grid>
+
+                <Border BackgroundColor="{AppThemeBinding Light=#F3F3F3, Dark=#2C2C2C}" Padding="15">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="10" />
+                    </Border.StrokeShape>
+                    <Label x:Name="DescriptionLabel" FontSize="16" />
+                </Border>
+
+                <Button Text="🔊 Play Audio" 
+                        Clicked="OnPlayAudioClicked" 
+                        BackgroundColor="#ff5722" 
+                        TextColor="White" 
+                        CornerRadius="25"
+                        HeightRequest="50"
+                        FontAttributes="Bold"/>
+                <Button Text="📍 Xem trên bản đồ"
+                        Clicked="OnViewMapClicked"
+                        BackgroundColor="#FF5722"
+                        TextColor="White"
+                        CornerRadius="10"
+                        Margin="16"
+                        HeightRequest="50" />
+            </StackLayout>
+        </StackLayout>
+    </ScrollView>
+</ContentPage>
