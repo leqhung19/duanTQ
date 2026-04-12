@@ -1,38 +1,43 @@
+using DoAn.FRONTEND.Models;
+using DoAn.Services;
 using Microsoft.Maui.Devices.Sensors;
 
 namespace DoAn.Views
 {
     public partial class MapPage : ContentPage
     {
-        private CancellationTokenSource? _gpsCts;
+        private CancellationTokenSource? _trackingCts;
+        private List<Restaurant> _restaurants = new();
+        private Restaurant? _selectedPOI;
 
+        [Obsolete]
         public MapPage()
         {
             InitializeComponent();
             mapWebView.Navigated += OnMapLoaded;
+            mapWebView.Navigating += OnWebViewNavigating;
         }
 
+        // ============ VÒNG ĐỜI ============
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            var source = new HtmlWebViewSource { Html = GenerateMapHtml(10.7583, 106.7011, "") };
-            mapWebView.Source = source;
+
+            _restaurants = await RestaurantService.Instance.GetAllAsync();
+
+            var html = await GenerateMapHtmlAsync(_restaurants);
+            mapWebView.Source = new HtmlWebViewSource { Html = html };
+
             await RequestLocationPermissionAsync();
         }
 
         protected override void OnDisappearing()
         {
             base.OnDisappearing();
-            _gpsCts?.Cancel();
+            _trackingCts?.Cancel();
         }
 
-        private void OnMapLoaded(object? sender, WebNavigatedEventArgs e)
-        {
-            loadingIndicator.IsVisible = false;
-            loadingIndicator.IsRunning = false;
-            GetLocationOnce();
-        }
-
+        // ============ PERMISSION ============
         private async Task RequestLocationPermissionAsync()
         {
             var status = await Permissions.CheckStatusAsync<Permissions.LocationWhenInUse>();
@@ -40,30 +45,148 @@ namespace DoAn.Views
                 await Permissions.RequestAsync<Permissions.LocationWhenInUse>();
         }
 
-        private async void GetLocationOnce()
+        // ============ MAP LOADED ============
+        private void OnMapLoaded(object? sender, WebNavigatedEventArgs e)
         {
-            try
-            {
-                _gpsCts = new CancellationTokenSource();
-                var request = new GeolocationRequest(GeolocationAccuracy.Low, TimeSpan.FromSeconds(10));
-                var location = await Geolocation.Default.GetLocationAsync(request, _gpsCts.Token);
-                if (location != null) await SendLocationToMapAsync(location);
-            }
-            catch { }
+            loadingIndicator.IsVisible = false;
+            loadingIndicator.IsRunning = false;
+            StartRealtimeTracking();
         }
 
+        // ============ REALTIME TRACKING ============
+        private async void StartRealtimeTracking()
+        {
+            _trackingCts?.Cancel();
+            _trackingCts = new CancellationTokenSource();
+
+            await Task.Run(async () =>
+            {
+                while (!_trackingCts.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var request = new GeolocationRequest(
+                            GeolocationAccuracy.Medium,
+                            TimeSpan.FromSeconds(5));
+
+                        var location = await Geolocation.Default
+                            .GetLocationAsync(request, _trackingCts.Token);
+
+                        if (location != null)
+                        {
+                            await MainThread.InvokeOnMainThreadAsync(async () =>
+                            {
+                                await UpdateUserOnMapAsync(location);
+                                await HighlightNearestPOIAsync(location);
+                            });
+                        }
+
+                        await Task.Delay(3000, _trackingCts.Token);
+                    }
+                    catch (OperationCanceledException) { break; }
+                    catch { await Task.Delay(5000); }
+                }
+            });
+        }
+
+        // Cập nhật vị trí người dùng lên map
+        private async Task UpdateUserOnMapAsync(Location location)
+        {
+            var ci = System.Globalization.CultureInfo.InvariantCulture;
+            var lat = location.Latitude.ToString(ci);
+            var lng = location.Longitude.ToString(ci);
+            var acc = ((int)(location.Accuracy ?? 20)).ToString();
+            await mapWebView.EvaluateJavaScriptAsync(
+                "updateUserLocation(" + lat + "," + lng + "," + acc + ");");
+        }
+
+        // Highlight POI gần nhất
+        private async Task HighlightNearestPOIAsync(Location userLocation)
+        {
+            if (!_restaurants.Any()) return;
+
+            var nearest = _restaurants
+                .OrderBy(r => Location.CalculateDistance(
+                    userLocation,
+                    new Location(r.Latitude, r.Longitude),
+                    DistanceUnits.Kilometers))
+                .First();
+
+            await mapWebView.EvaluateJavaScriptAsync(
+                "highlightNearestPOI(" + nearest.Id + ");");
+        }
+
+        // ============ NHẤN VÀO POI ============
+        [Obsolete]
+        private void OnWebViewNavigating(object? sender, WebNavigatingEventArgs e)
+        {
+            if (!e.Url.StartsWith("poi://")) return;
+
+            e.Cancel = true;
+
+            var idStr = e.Url.Replace("poi://restaurant/", "");
+            if (!int.TryParse(idStr, out var id)) return;
+
+            var poi = _restaurants.FirstOrDefault(r => r.Id == id);
+            if (poi == null) return;
+
+            ShowPOIPanel(poi);
+        }
+
+        [Obsolete]
+        private void ShowPOIPanel(Restaurant poi)
+        {
+            _selectedPOI = poi;
+
+            POIName.Text = poi.Name;
+            POIDescription.Text = poi.GetDescription(POIService.Instance.CurrentLang);
+            POIImage.Source = poi.Image;
+            POIDetailPanel.IsVisible = true;
+
+            // Animation trượt lên
+            POIDetailPanel.TranslationY = 300;
+            POIDetailPanel.TranslateTo(0, 0, 300, Easing.CubicOut);
+        }
+
+        private void OnClosePOIPanel(object? sender, EventArgs e)
+        {
+            POIDetailPanel.IsVisible = false;
+            _selectedPOI = null;
+        }
+
+        private async void OnViewPOIDetail(object? sender, EventArgs e)
+        {
+            if (_selectedPOI == null) return;
+            POIDetailPanel.IsVisible = false;
+            await Shell.Current.GoToAsync(nameof(DetailPage),
+                new Dictionary<string, object> { { "Restaurant", _selectedPOI } });
+        }
+
+        // ============ NÚT LOCATE ============
         private async void OnLocateClicked(object? sender, EventArgs e)
         {
             LocateBtn.IsEnabled = false;
             LocateBtn.Text = "⏳";
             try
             {
-                var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(8));
+                var request = new GeolocationRequest(
+                    GeolocationAccuracy.Medium,
+                    TimeSpan.FromSeconds(8));
+
                 var location = await Geolocation.Default.GetLocationAsync(request);
+
                 if (location != null)
-                    await SendLocationToMapAsync(location);
+                {
+                    var ci = System.Globalization.CultureInfo.InvariantCulture;
+                    var lat = location.Latitude.ToString(ci);
+                    var lng = location.Longitude.ToString(ci);
+                    await mapWebView.EvaluateJavaScriptAsync(
+                        "flyToUser(" + lat + "," + lng + ");");
+                }
                 else
+                {
                     await DisplayAlertAsync("Thông báo", "Không lấy được vị trí", "OK");
+                }
             }
             catch
             {
@@ -76,48 +199,26 @@ namespace DoAn.Views
             }
         }
 
-        private async Task SendLocationToMapAsync(Location location)
+        // ============ LOAD HTML TỪ FILE ============
+        private async Task<string> GenerateMapHtmlAsync(List<Restaurant> restaurants)
         {
-            var ci = System.Globalization.CultureInfo.InvariantCulture;
-            var lat = location.Latitude.ToString(ci);
-            var lng = location.Longitude.ToString(ci);
-            var acc = ((int)(location.Accuracy ?? 30)).ToString();
-            await mapWebView.EvaluateJavaScriptAsync($"setLocationAndZoom({lat},{lng},{acc});");
-        }
+            // Đọc file map.html từ Resources/Raw/
+            using var stream = await FileSystem.OpenAppPackageFileAsync("map.html");
+            using var reader = new StreamReader(stream);
+            var html = await reader.ReadToEndAsync();
 
-        private string GenerateMapHtml(double lat, double lng, string name)
-        {
+            // Tạo JS array POI
             var ci = System.Globalization.CultureInfo.InvariantCulture;
-            return $@"
-<!DOCTYPE html><html><head>
-<meta charset='utf-8'/>
-<meta name='viewport' content='width=device-width,initial-scale=1.0'>
-<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>
-<style>
-  *{{margin:0;padding:0;box-sizing:border-box}}
-  html,body{{height:100%;width:100%}}
-  #map{{height:100vh;width:100%}}
-</style></head><body>
-<div id='map'></div>
-<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
-<script>
-  var map=L.map('map').setView([{lat.ToString(ci)},{lng.ToString(ci)}],15);
-  L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png',{{
-    subdomains:'abcd',maxZoom:19
-  }}).addTo(map);
-  var userMarker=null,userCircle=null;
-  function setLocationAndZoom(lat,lng,accuracy){{
-    if(userMarker)map.removeLayer(userMarker);
-    if(userCircle)map.removeLayer(userCircle);
-    userMarker=L.circleMarker([lat,lng],{{
-      radius:8,color:'#fff',weight:3,fillColor:'#2196F3',fillOpacity:1
-    }}).addTo(map).bindPopup('📍 Vị trí của bạn').openPopup();
-    userCircle=L.circle([lat,lng],{{
-      radius:accuracy,color:'#2196F3',fillColor:'#2196F3',fillOpacity:0.1,weight:1
-    }}).addTo(map);
-    map.flyTo([lat,lng],17,{{animate:true,duration:1.5}});
-  }}
-</script></body></html>";
+            var poisJs = "[" + string.Join(",", restaurants.Select(r =>
+                "{id:" + r.Id +
+                ",lat:" + r.Latitude.ToString(ci) +
+                ",lng:" + r.Longitude.ToString(ci) +
+                ",name:'" + (r.Name ?? "").Replace("'", "\\'") +
+                "',radius:" + r.RadiusMeters.ToString(ci) + "}"
+            )) + "]";
+
+            // Thay placeholder trong HTML
+            return html.Replace("POIS_PLACEHOLDER", poisJs);
         }
     }
 }

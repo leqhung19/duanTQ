@@ -54,11 +54,14 @@ namespace DoAn.Views
             _gpsCts?.Cancel();
         }
 
-        private void OnMapLoaded(object? sender, WebNavigatedEventArgs e)
+        private async void OnMapLoaded(object? sender, WebNavigatedEventArgs e)
         {
             loadingIndicator.IsVisible = false;
             loadingIndicator.IsRunning = false;
-            GetLocationOnce();
+
+            // ✅ Map mở ra focus vào QUÁN trước
+            // Sau đó mới lấy vị trí người dùng hiển thị phụ
+            await GetUserLocationSilentlyAsync();
         }
 
         private async void OnBackClicked(object? sender, EventArgs e)
@@ -72,31 +75,43 @@ namespace DoAn.Views
             {
                 var request = new GeolocationRequest(GeolocationAccuracy.Medium, TimeSpan.FromSeconds(8));
                 var location = await Geolocation.Default.GetLocationAsync(request);
-                if (location != null) await SendLocationToMapAsync(location);
+                if (location != null)
+                {
+                    // Nút locate thì mới zoom về vị trí người dùng
+                    await SendUserLocationAsync(location, zoomToUser: true);
+                }
             }
             catch { }
             finally { LocateBtn.IsEnabled = true; LocateBtn.Text = "📍"; }
         }
 
-        private async void GetLocationOnce()
+        // ✅ Lấy vị trí im lặng — chỉ vẽ dot, KHÔNG zoom
+        private async Task GetUserLocationSilentlyAsync()
         {
             try
             {
                 _gpsCts = new CancellationTokenSource();
                 var request = new GeolocationRequest(GeolocationAccuracy.Low, TimeSpan.FromSeconds(10));
                 var location = await Geolocation.Default.GetLocationAsync(request, _gpsCts.Token);
-                if (location != null) await SendLocationToMapAsync(location);
+                if (location != null)
+                    await SendUserLocationAsync(location, zoomToUser: false);
             }
             catch { }
         }
 
-        private async Task SendLocationToMapAsync(Location location)
+        private async Task SendUserLocationAsync(Location location, bool zoomToUser)
         {
             var ci = System.Globalization.CultureInfo.InvariantCulture;
             var lat = location.Latitude.ToString(ci);
             var lng = location.Longitude.ToString(ci);
             var acc = ((int)(location.Accuracy ?? 30)).ToString();
-            await mapWebView.EvaluateJavaScriptAsync($"setLocationAndZoom({lat},{lng},{acc});");
+
+            if (zoomToUser)
+                // Nhấn nút locate → zoom về người dùng
+                await mapWebView.EvaluateJavaScriptAsync($"setUserLocationAndZoom({lat},{lng},{acc});");
+            else
+                // Load xong → chỉ vẽ dot, giữ nguyên focus quán
+                await mapWebView.EvaluateJavaScriptAsync($"setUserLocationOnly({lat},{lng},{acc});");
         }
 
         private string GenerateMapHtml()
@@ -118,31 +133,39 @@ namespace DoAn.Views
 <div id='map'></div>
 <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
 <script>
-  var map=L.map('map').setView([{latStr},{lngStr}],17);
+  // ✅ Focus vào QUÁN khi mở
+  var map = L.map('map').setView([{latStr},{lngStr}], 17);
+
   L.tileLayer('https://{{s}}.basemaps.cartocdn.com/rastertiles/voyager/{{z}}/{{x}}/{{y}}{{r}}.png',{{
-    subdomains:'abcd',maxZoom:19
+    subdomains:'abcd', maxZoom:19
   }}).addTo(map);
 
-  var userMarker=null,userCircle=null;
-
-  // Marker quán
+  // Marker quán — luôn hiển thị
   L.marker([{latStr},{lngStr}]).addTo(map)
     .bindPopup('<b>{_name}</b>').openPopup();
   L.circle([{latStr},{lngStr}],{{
-    color:'#FF5722',fillColor:'#FF5722',fillOpacity:0.2,radius:50
+    color:'#FF5722', fillColor:'#FF5722', fillOpacity:0.15, radius:50, weight:2
   }}).addTo(map);
 
-  // Vị trí người dùng
-  function setLocationAndZoom(lat,lng,accuracy){{
-    if(userMarker)map.removeLayer(userMarker);
-    if(userCircle)map.removeLayer(userCircle);
-    userMarker=L.circleMarker([lat,lng],{{
-      radius:8,color:'#fff',weight:3,fillColor:'#2196F3',fillOpacity:1
+  var userMarker = null, userCircle = null;
+
+  // Chỉ vẽ dot người dùng, KHÔNG zoom
+  function setUserLocationOnly(lat, lng, accuracy) {{
+    if(userMarker) map.removeLayer(userMarker);
+    if(userCircle) map.removeLayer(userCircle);
+    userMarker = L.circleMarker([lat,lng], {{
+      radius:8, color:'#fff', weight:3, fillColor:'#2196F3', fillOpacity:1
     }}).addTo(map).bindPopup('📍 Vị trí của bạn');
-    userCircle=L.circle([lat,lng],{{
-      radius:accuracy,color:'#2196F3',fillColor:'#2196F3',fillOpacity:0.1,weight:1
+    userCircle = L.circle([lat,lng], {{
+      radius:accuracy, color:'#2196F3', fillColor:'#2196F3', fillOpacity:0.1, weight:1
     }}).addTo(map);
-    map.flyTo([lat,lng],17,{{animate:true,duration:1.5}});
+    // KHÔNG gọi map.flyTo ở đây
+  }}
+
+  // Nhấn nút locate → zoom về người dùng
+  function setUserLocationAndZoom(lat, lng, accuracy) {{
+    setUserLocationOnly(lat, lng, accuracy);
+    map.flyTo([lat,lng], 17, {{animate:true, duration:1.5}});
   }}
 </script></body></html>";
         }

@@ -5,10 +5,12 @@
              Title="Bản đồ"
              Shell.NavBarIsVisible="False">
     <Grid>
+        <!-- Map -->
         <WebView x:Name="mapWebView"
                  VerticalOptions="Fill"
                  HorizontalOptions="Fill"/>
 
+        <!-- Loading -->
         <ActivityIndicator x:Name="loadingIndicator"
                            IsRunning="True" IsVisible="True"
                            Color="#FF5722"
@@ -23,8 +25,71 @@
                 TextColor="#212121"
                 CornerRadius="25"
                 HeightRequest="50" WidthRequest="50"
-                Margin="0,0,16,30"
+                Margin="0,0,16,100"
                 VerticalOptions="End"
                 HorizontalOptions="End"/>
+
+        <!-- Panel chi tiết POI khi nhấn vào -->
+        <Border x:Name="POIDetailPanel"
+                IsVisible="False"
+                BackgroundColor="White"
+                Padding="0"
+                Margin="12,0,12,16"
+                VerticalOptions="End"
+                HorizontalOptions="Fill">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16" />
+            </Border.StrokeShape>
+
+            <Grid RowDefinitions="120,Auto,Auto,Auto" Padding="0">
+
+                <!-- Ảnh POI -->
+                <Image x:Name="POIImage"
+                       Grid.Row="0"
+                       Aspect="AspectFill"
+                       HeightRequest="120"/>
+
+                <!-- Nút đóng -->
+                <Button Text="✕"
+                        Clicked="OnClosePOIPanel"
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontSize="18"
+                        HeightRequest="40" WidthRequest="40"
+                        VerticalOptions="Start"
+                        HorizontalOptions="End"
+                        Margin="0,4,4,0"
+                        Grid.Row="0"/>
+
+                <!-- Tên -->
+                <Label x:Name="POIName"
+                       Grid.Row="1"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       TextColor="#212121"
+                       Margin="16,12,16,4"/>
+
+                <!-- Mô tả -->
+                <Label x:Name="POIDescription"
+                       Grid.Row="2"
+                       FontSize="13"
+                       TextColor="#757575"
+                       LineBreakMode="WordWrap"
+                       MaxLines="3"
+                       Margin="16,0,16,8"/>
+
+                <!-- Nút xem chi tiết -->
+                <Button x:Name="POIDetailBtn"
+                        Grid.Row="3"
+                        Text="Xem chi tiết →"
+                        Clicked="OnViewPOIDetail"
+                        BackgroundColor="#FF5722"
+                        TextColor="White"
+                        CornerRadius="0"
+                        HeightRequest="44"
+                        FontSize="14"/>
+            </Grid>
+        </Border>
+
     </Grid>
 </ContentPage>
