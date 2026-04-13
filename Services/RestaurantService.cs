@@ -29,12 +29,19 @@ namespace DoAn.Services
             {
                 var result = await _httpClient.GetFromJsonAsync<List<Restaurant>>("restaurants");
                 _cache = result ?? new List<Restaurant>();
+
+                // ✅ Sync về SQLite để dùng offline
+                await DatabaseService.Instance.SyncFromApiAsync(_cache);
+
                 return _cache;
             }
             catch
             {
-                // Offline — trả về cache
-                return _cache.Any() ? _cache : GetMockData();
+                if (_cache.Any()) return _cache;
+
+                // ✅ Offline → đọc từ SQLite
+                var local = await DatabaseService.Instance.GetAllAsync();
+                return local.Select(l => l.ToRestaurant()).ToList();
             }
         }
 
