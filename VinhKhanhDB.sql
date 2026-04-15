@@ -101,8 +101,3 @@ VALUES
  N'껌 떰 바 바 식당에 접근 중입니다',
  N'您正在接近碎米饭餐厅');
 GO
-
-INSERT INTO QRCodes (RestaurantId, QRContent) VALUES
-(1, 'doan://restaurant/1'),
-(2, 'doan://restaurant/2');
-GO
