@@ -1,5 +1,6 @@
 using DoAn.FRONTEND.Models;
 using DoAn.Services;
+using ZXing;
 using ZXing.Net.Maui;
 
 namespace DoAn.Views
@@ -35,7 +36,6 @@ namespace DoAn.Views
         }
 
         // ============ QUÉT QR ============
-        [Obsolete]
         private async void OnBarcodesDetected(object? sender, BarcodeDetectionEventArgs e)
         {
             // Chống quét nhiều lần liên tiếp
@@ -53,7 +53,9 @@ namespace DoAn.Views
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
+#pragma warning disable CS0612 // Type or member is obsolete
                 await ProcessQRCodeAsync(qrContent);
+#pragma warning restore CS0612 // Type or member is obsolete
             });
         }
 
@@ -173,7 +175,7 @@ namespace DoAn.Views
 
             // Animation trượt lên
             ResultPanel.TranslationY = 400;
-            ResultPanel.TranslateTo(0, 0, 350, Easing.CubicOut);
+            _ = ResultPanel.TranslateTo(0, 0, 350, Easing.CubicOut);
         }
 
         private void ResetScanner()

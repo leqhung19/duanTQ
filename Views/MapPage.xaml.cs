@@ -50,7 +50,38 @@ namespace DoAn.Views
         {
             loadingIndicator.IsVisible = false;
             loadingIndicator.IsRunning = false;
+
+            // ✅ Tự động zoom về vị trí thực ngay khi map load xong
             StartRealtimeTracking();
+            GetInitialLocationAsync();
+        }
+
+        // Lấy vị trí lần đầu và zoom vào ngay
+        private async void GetInitialLocationAsync()
+        {
+            try
+            {
+                var request = new GeolocationRequest(
+                    GeolocationAccuracy.Medium,
+                    TimeSpan.FromSeconds(8));
+
+                var location = await Geolocation.Default.GetLocationAsync(request);
+
+                if (location != null)
+                {
+                    var ci = System.Globalization.CultureInfo.InvariantCulture;
+                    var lat = location.Latitude.ToString(ci);
+                    var lng = location.Longitude.ToString(ci);
+                    var acc = ((int)(location.Accuracy ?? 20)).ToString();
+
+                    // Zoom về vị trí thực ngay lần đầu mở map
+                    await mapWebView.EvaluateJavaScriptAsync(
+                        "updateUserLocation(" + lat + "," + lng + "," + acc + ");" +
+                        "map.setView([" + lat + "," + lng + "], 16);"
+                    );
+                }
+            }
+            catch { }
         }
 
         // ============ REALTIME TRACKING ============
