@@ -78,7 +78,7 @@ namespace DoAn.Services
                 },
                 new LocalRestaurant
                 {
-                Id = 15,
+                Id = 3,
                 Name = "Ốc Bà Tư",
                 Image = "oc_ba_tu.jpg",
                 Description_vi = "Quán ốc bình dân giá rẻ, đông khách",
@@ -98,7 +98,7 @@ namespace DoAn.Services
                 },
                 new LocalRestaurant
                 {
-                Id = 16,
+                Id = 4,
                 Name = "Cơm Tấm Sài Gòn",
                 Image = "com_tam_sg.jpg",
                 Description_vi = "Cơm tấm đặc biệt với sườn nướng và chả trứng",
@@ -118,7 +118,7 @@ namespace DoAn.Services
                 },
                 new LocalRestaurant
                 {
-                Id = 17,
+                Id = 5,
                 Name = "Bún Bò Huế Dì Sáu",
                 Image = "bun_bo_hue.jpg",
                 Description_vi = "Bún bò Huế chuẩn vị miền Trung, nước dùng đậm đà",
@@ -236,6 +236,40 @@ namespace DoAn.Services
                     RestaurantId = restaurantId,
                     QRContent = qrContent
                 });
+        }
+        // ✅ Xóa toàn bộ data cũ rồi sync lại
+        public async Task ClearAndSyncAsync(List<Restaurant> apiData)
+        {
+            await InitAsync();
+
+            // Xóa hết data cũ
+            await _db!.DeleteAllAsync<LocalRestaurant>();
+
+            // Insert lại toàn bộ từ API
+            var locals = apiData.Select(r => new LocalRestaurant
+            {
+                Id = r.Id,
+                Name = r.Name ?? "",
+                Image = r.Image,
+                Description_vi = r.Description_vi,
+                Description_en = r.Description_en,
+                Description_kr = r.Description_kr,
+                Description_cn = r.Description_cn,
+                Address = r.Address,
+                Phone = r.Phone,
+                OpenTime = r.OpenTime,
+                PriceRange = r.PriceRange,
+                Latitude = r.Latitude,
+                Longitude = r.Longitude,
+                RadiusMeters = r.RadiusMeters,
+                Priority = r.Priority,
+                AudioContent_vi = r.AudioContent_vi,
+                AudioContent_en = r.AudioContent_en,
+                AudioContent_kr = r.AudioContent_kr,
+                AudioContent_cn = r.AudioContent_cn
+            }).ToList();
+
+            await _db.InsertAllAsync(locals);
         }
     }
 }
