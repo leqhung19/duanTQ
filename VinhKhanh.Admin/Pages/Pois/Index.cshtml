@@ -1,0 +1,73 @@
+﻿@page
+@model VinhKhanh.Admin.Pages.Pois.IndexModel
+@{
+    ViewData["Title"] = "Danh sách điểm thuyết minh";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Điểm thuyết minh (POI)</h2>
+    <a asp-page="Create" class="btn btn-primary">+ Thêm điểm mới</a>
+</div>
+
+@if (!Model.Pois.Any())
+{
+    <div class="alert alert-info">Chưa có điểm nào. Nhấn "Thêm điểm mới" để bắt đầu.</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Tên điểm</th>
+                <th>Tọa độ</th>
+                <th>Bán kính</th>
+                <th>Audio</th>
+                <th>Trạng thái</th>
+                <th>Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var poi in Model.Pois)
+            {
+                <tr class="@(poi.IsActive ? "" : "table-secondary text-muted")">
+                    <td>
+                        <strong>@poi.Name</strong>
+                        <br><small class="text-muted">@poi.DescriptionVi.Take(60)…</small>
+                    </td>
+                    <td>
+                        <small>@poi.Latitude.ToString("F5")</small><br>
+                        <small>@poi.Longitude.ToString("F5")</small>
+                    </td>
+                    <td>@poi.RadiusMeters m</td>
+                    <td>
+                        @{
+                            var audioCount = poi.AudioFiles.Count(a => a.IsPublished);
+                        }
+                        <span class="badge @(audioCount > 0 ? "bg-success" : "bg-warning text-dark")">
+                            @audioCount file
+                        </span>
+                    </td>
+                    <td>
+                        @if (poi.IsActive)
+                        {
+                            <span class="badge bg-success">Hoạt động</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Tắt</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-page="Edit" asp-route-id="@poi.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
+                        <a asp-page="Detail" asp-route-id="@poi.Id" class="btn btn-sm btn-outline-secondary">Audio</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@poi.Id"
+                              style="display:inline"
+                              onsubmit="return confirm('Tắt điểm @poi.Name?')">
+                            <button class="btn btn-sm btn-outline-danger">Tắt</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

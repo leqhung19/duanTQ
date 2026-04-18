@@ -1,0 +1,71 @@
+﻿@page
+@model VinhKhanh.Admin.Pages.Analytics.IndexModel
+@{
+    ViewData["Title"] = "Analytics — Thống kê lượt nghe";
+}
+
+<h2>Thống kê lượt nghe</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <div style="font-size:2rem; font-weight:800; color:#1565c0">@Model.TotalListens</div>
+                <div class="text-muted small">Tổng lượt nghe</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <div style="font-size:2rem; font-weight:800; color:#2e7d32">@Model.TodayListens</div>
+                <div class="text-muted small">Hôm nay</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <div style="font-size:2rem; font-weight:800; color:#f57f17">@Model.GpsTriggerCount</div>
+                <div class="text-muted small">Qua GPS</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <div style="font-size:2rem; font-weight:800; color:#00838f">@Model.QrTriggerCount</div>
+                <div class="text-muted small">Qua QR Code</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h5>Top 10 điểm được nghe nhiều nhất</h5>
+<table class="table table-hover mb-4">
+    <thead class="table-dark">
+        <tr><th>#</th><th>Tên điểm</th><th>Lượt nghe</th><th>Ngôn ngữ phổ biến</th></tr>
+    </thead>
+    <tbody>
+        @{
+            int rank = 1;
+        }
+        @foreach (var item in Model.TopPois)
+        {
+            <tr>
+                <td><strong>@rank</strong></td>
+                <td>@item.PoiName</td>
+                <td>
+                    <div class="progress" style="height:20px; width:200px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             style="width:@(item.Percent)%">
+                            @item.Count
+                        </div>
+                    </div>
+                </td>
+                <td><span class="badge bg-secondary">@item.TopLanguage</span></td>
+            </tr>
+            rank++;
+        }
+    </tbody>
+</table>
