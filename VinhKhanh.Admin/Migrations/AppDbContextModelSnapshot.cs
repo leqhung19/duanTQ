@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using VinhKhanh.Admin.Data;
 
 #nullable disable
 
-namespace VinhKhanh.Admin.Data.Migrations
+namespace VinhKhanh.Admin.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260409030935_InitialCreate")]
-    partial class InitialCreate
+    partial class AppDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -227,7 +224,7 @@ namespace VinhKhanh.Admin.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("VinhKhanh.Admin.Models.AudioFile", b =>
+            modelBuilder.Entity("VinhKhanh.Admin.Models.ActiveSession", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -235,38 +232,55 @@ namespace VinhKhanh.Admin.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DurationSeconds")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("ConnectedAt")
+                        .HasColumnType("datetime2");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<long>("FileSizeBytes")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Language")
+                    b.Property<string>("ConnectionId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("PoiId")
-                        .HasColumnType("int");
+                    b.Property<string>("DevicePlatform")
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("UploadedAt")
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastPing")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PoiId", "Language");
+                    b.HasIndex("ConnectionId")
+                        .IsUnique();
 
-                    b.ToTable("AudioFiles");
+                    b.ToTable("ActiveSessions");
+                });
+
+            modelBuilder.Entity("VinhKhanh.Admin.Models.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name_cn")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name_en")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name_vi")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("VinhKhanh.Admin.Models.ListenLog", b =>
@@ -288,7 +302,7 @@ namespace VinhKhanh.Admin.Data.Migrations
                     b.Property<DateTime>("ListenedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("PoiId")
+                    b.Property<int>("RestaurantId")
                         .HasColumnType("int");
 
                     b.Property<string>("TriggerType")
@@ -299,12 +313,12 @@ namespace VinhKhanh.Admin.Data.Migrations
 
                     b.HasIndex("ListenedAt");
 
-                    b.HasIndex("PoiId");
+                    b.HasIndex("RestaurantId");
 
                     b.ToTable("ListenLogs");
                 });
 
-            modelBuilder.Entity("VinhKhanh.Admin.Models.Poi", b =>
+            modelBuilder.Entity("VinhKhanh.Admin.Models.QRCode", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -315,17 +329,59 @@ namespace VinhKhanh.Admin.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DescriptionEn")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("DescriptionVi")
+                    b.Property<string>("QRContent")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ImagePath")
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("QRCodes", (string)null);
+                });
+
+            modelBuilder.Entity("VinhKhanh.Admin.Models.Restaurant", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioContent_cn")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioContent_en")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AudioContent_vi")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description_cn")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description_en")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description_vi")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsActive")
@@ -342,7 +398,13 @@ namespace VinhKhanh.Admin.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
-                    b.Property<string>("OwnerId")
+                    b.Property<string>("OpenTime")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Phone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PriceRange")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Priority")
@@ -356,39 +418,11 @@ namespace VinhKhanh.Admin.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CategoryId");
+
                     b.HasIndex("Latitude", "Longitude");
 
-                    b.ToTable("Pois");
-                });
-
-            modelBuilder.Entity("VinhKhanh.Admin.Models.Translation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("PoiId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PoiId", "Language")
-                        .IsUnique();
-
-                    b.ToTable("Translations");
+                    b.ToTable("Restaurants");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -442,46 +476,47 @@ namespace VinhKhanh.Admin.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("VinhKhanh.Admin.Models.AudioFile", b =>
-                {
-                    b.HasOne("VinhKhanh.Admin.Models.Poi", "Poi")
-                        .WithMany("AudioFiles")
-                        .HasForeignKey("PoiId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Poi");
-                });
-
             modelBuilder.Entity("VinhKhanh.Admin.Models.ListenLog", b =>
                 {
-                    b.HasOne("VinhKhanh.Admin.Models.Poi", "Poi")
+                    b.HasOne("VinhKhanh.Admin.Models.Restaurant", "Restaurant")
                         .WithMany("ListenLogs")
-                        .HasForeignKey("PoiId")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Poi");
+                    b.Navigation("Restaurant");
                 });
 
-            modelBuilder.Entity("VinhKhanh.Admin.Models.Translation", b =>
+            modelBuilder.Entity("VinhKhanh.Admin.Models.QRCode", b =>
                 {
-                    b.HasOne("VinhKhanh.Admin.Models.Poi", "Poi")
-                        .WithMany("Translations")
-                        .HasForeignKey("PoiId")
+                    b.HasOne("VinhKhanh.Admin.Models.Restaurant", "Restaurant")
+                        .WithMany("QRCodes")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Poi");
+                    b.Navigation("Restaurant");
                 });
 
-            modelBuilder.Entity("VinhKhanh.Admin.Models.Poi", b =>
+            modelBuilder.Entity("VinhKhanh.Admin.Models.Restaurant", b =>
                 {
-                    b.Navigation("AudioFiles");
+                    b.HasOne("VinhKhanh.Admin.Models.Category", "Category")
+                        .WithMany("Restaurants")
+                        .HasForeignKey("CategoryId");
 
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("VinhKhanh.Admin.Models.Category", b =>
+                {
+                    b.Navigation("Restaurants");
+                });
+
+            modelBuilder.Entity("VinhKhanh.Admin.Models.Restaurant", b =>
+                {
                     b.Navigation("ListenLogs");
 
-                    b.Navigation("Translations");
+                    b.Navigation("QRCodes");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,73 +1,159 @@
 ﻿@page
 @model VinhKhanh.Admin.Pages.Pois.IndexModel
 @{
-    ViewData["Title"] = "Danh sách điểm thuyết minh";
+    ViewData["Title"] = "Điểm POI";
+    ViewData["ActivePage"] = "Pois";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Điểm thuyết minh (POI)</h2>
-    <a asp-page="Create" class="btn btn-primary">+ Thêm điểm mới</a>
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-muted small">Tổng POI</div>
+            <div class="fs-3 fw-bold">@Model.Restaurants.Count</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-muted small">Đang hoạt động</div>
+            <div class="fs-3 fw-bold text-success">@Model.Restaurants.Count(r => r.IsActive)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-muted small">Có TTS</div>
+            <div class="fs-3 fw-bold text-primary">
+                @Model.Restaurants.Count(r => !string.IsNullOrEmpty(r.AudioContent_vi))
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center p-3">
+            <div class="text-muted small">Đa ngôn ngữ</div>
+            <div class="fs-3 fw-bold text-info">
+                @Model.Restaurants.Count(r =>
+                    !string.IsNullOrEmpty(r.AudioContent_en) ||
+                    !string.IsNullOrEmpty(r.AudioContent_cn))
+            </div>
+        </div>
+    </div>
 </div>
 
-@if (!Model.Pois.Any())
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Danh sách POI</h5>
+    <a asp-page="Create" class="btn btn-success btn-sm px-3">+ Thêm địa điểm</a>
+</div>
+
+@if (TempData["Message"] is string msg)
 {
-    <div class="alert alert-info">Chưa có điểm nào. Nhấn "Thêm điểm mới" để bắt đầu.</div>
+    <div class="alert alert-success alert-dismissible fade show">
+        @msg <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 }
-else
-{
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>Tên điểm</th>
-                <th>Tọa độ</th>
-                <th>Bán kính</th>
-                <th>Audio</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var poi in Model.Pois)
-            {
-                <tr class="@(poi.IsActive ? "" : "table-secondary text-muted")">
-                    <td>
-                        <strong>@poi.Name</strong>
-                        <br><small class="text-muted">@poi.DescriptionVi.Take(60)…</small>
-                    </td>
-                    <td>
-                        <small>@poi.Latitude.ToString("F5")</small><br>
-                        <small>@poi.Longitude.ToString("F5")</small>
-                    </td>
-                    <td>@poi.RadiusMeters m</td>
-                    <td>
-                        @{
-                            var audioCount = poi.AudioFiles.Count(a => a.IsPublished);
-                        }
-                        <span class="badge @(audioCount > 0 ? "bg-success" : "bg-warning text-dark")">
-                            @audioCount file
-                        </span>
-                    </td>
-                    <td>
-                        @if (poi.IsActive)
+
+<!-- POI Grid -->
+<div class="row g-3">
+    @foreach (var r in Model.Restaurants)
+    {
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <!-- Ảnh -->
+                <div style="height:160px;overflow:hidden;border-radius:8px 8px 0 0;background:#f0f0f0;">
+                    @if (!string.IsNullOrEmpty(r.Image))
+                    {
+                        <img src="/images/@r.Image" style="width:100%;height:100%;object-fit:cover;"
+                             onerror="this.src='/images/placeholder.jpg'" />
+                    }
+                    else
+                    {
+                        <div style="height:100%;display:flex;align-items:center;justify-content:center;
+                            font-size:3rem;color:#ccc;">
+                            📍
+                        </div>
+                    }
+                </div>
+
+                <div class="card-body pb-2">
+                    <!-- Tên + trạng thái -->
+                    <div class="d-flex justify-content-between align-items-start mb-1">
+                        <h6 class="mb-0 fw-bold">@r.Name</h6>
+                        @if (r.IsActive)
                         {
-                            <span class="badge bg-success">Hoạt động</span>
+                            <span class="badge bg-success" style="font-size:.7rem;">Hoạt động</span>
                         }
                         else
                         {
-                            <span class="badge bg-secondary">Tắt</span>
+                            <span class="badge bg-secondary" style="font-size:.7rem;">Tắt</span>
                         }
-                    </td>
-                    <td>
-                        <a asp-page="Edit" asp-route-id="@poi.Id" class="btn btn-sm btn-outline-primary">Sửa</a>
-                        <a asp-page="Detail" asp-route-id="@poi.Id" class="btn btn-sm btn-outline-secondary">Audio</a>
-                        <form method="post" asp-page-handler="Delete" asp-route-id="@poi.Id"
-                              style="display:inline"
-                              onsubmit="return confirm('Tắt điểm @poi.Name?')">
-                            <button class="btn btn-sm btn-outline-danger">Tắt</button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                    </div>
+
+                    <!-- Địa chỉ -->
+                    @if (!string.IsNullOrEmpty(r.Address))
+                    {
+                        <p class="text-muted small mb-1">📌 @r.Address</p>
+                    }
+
+                    <!-- Tọa độ + bán kính -->
+                    <div class="row g-1 mb-2 small text-muted">
+                        <div class="col-7">
+                            Tọa độ: @r.Latitude.ToString("F5"), @r.Longitude.ToString("F5")
+                        </div>
+                        <div class="col-5 text-end">
+                            Bán kính: @r.RadiusMeters m
+                        </div>
+                    </div>
+
+                    <!-- Ngôn ngữ TTS có sẵn -->
+                    <div class="mb-2">
+                        <small class="text-muted me-1">Ngôn ngữ:</small>
+                        @if (!string.IsNullOrEmpty(r.AudioContent_vi))
+                        {
+                            <span class="badge" style="background:#1565c0;font-size:.7rem;">VI</span>
+                        }
+                        @if (!string.IsNullOrEmpty(r.AudioContent_en))
+                        {
+                            <span class="badge" style="background:#2e7d32;font-size:.7rem;">EN</span>
+                        }
+                        @if (!string.IsNullOrEmpty(r.AudioContent_cn))
+                        {
+                            <span class="badge" style="background:#c62828;font-size:.7rem;">CN</span>
+                        }
+                    </div>
+
+                    <!-- Ưu tiên -->
+                    <small class="text-muted">Ưu tiên: <strong>@r.Priority</strong></small>
+                </div>
+
+                <!-- Actions -->
+                <div class="card-footer bg-white border-top-0 d-flex gap-2 pb-3">
+                    <button class="btn btn-sm btn-outline-success flex-grow-1"
+                            onclick="previewTts(@r.Id, 'vi')" title="Nghe thử TTS">
+                        ▶ Nghe thử
+                    </button>
+                    <a asp-page="Edit" asp-route-id="@r.Id"
+                       class="btn btn-sm btn-outline-primary">Sửa</a>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id"
+                          onsubmit="return confirm('Xóa @r.Name?')">
+                        <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function previewTts(id, lang) {
+            fetch(`/api/tts/preview?id=${id}&lang=${lang}`)
+                .then(r => r.json())
+                .then(d => {
+                    if (d.text) {
+                        const utter = new SpeechSynthesisUtterance(d.text);
+                        utter.lang = lang === 'vi' ? 'vi-VN' : lang === 'en' ? 'en-US' : 'zh-CN';
+                        speechSynthesis.speak(utter);
+                    }
+                });
+        }
+    </script>
 }

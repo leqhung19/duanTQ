@@ -1,3 +1,4 @@
+/*
 namespace VinhKhanh.Admin.Models;
 
 public class ListenLog
@@ -11,5 +12,6 @@ public class ListenLog
     // KHÔNG lưu IP, IMEI hay bất kỳ thông tin cá nhân nào — theo NF-04 trong PRD
 
     // Navigation
-    public Poi Poi { get; set; } = null!;
+    public Restaurant Poi { get; set; } = null!;
 }
+*/

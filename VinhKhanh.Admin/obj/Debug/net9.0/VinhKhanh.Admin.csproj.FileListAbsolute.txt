@@ -364,8 +364,6 @@ D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\a0tqba05m6-{
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\g6u6xd7lho-{0}-muycvpuwrr-muycvpuwrr.gz
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\itgbh5h9ya-{0}-87fc7y1x7t-87fc7y1x7t.gz
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\448r9dth1f-{0}-mlv21k5csn-mlv21k5csn.gz
-D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\c209d2g7i2-{0}-7ofb9nxj03-7ofb9nxj03.gz
-D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\ybq7ea40fi-{0}-7ofb9nxj03-7ofb9nxj03.gz
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\staticwebassets.build.json
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\staticwebassets.build.json.cache
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\staticwebassets.development.json
@@ -392,3 +390,6 @@ D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\bin\Debug\net9.0\ru\Microsoft.CodeAnalys
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\bin\Debug\net9.0\tr\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
+D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\VinhKhanh.Admin.sourcelink.json
+D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\c209d2g7i2-{0}-39s9bqvu0a-39s9bqvu0a.gz
+D:\DOAN\VinhKhanh.Admin\VinhKhanh.Admin\obj\Debug\net9.0\compressed\ybq7ea40fi-{0}-39s9bqvu0a-39s9bqvu0a.gz

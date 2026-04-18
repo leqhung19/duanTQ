@@ -1,3 +1,4 @@
+/*
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,13 +10,15 @@ namespace VinhKhanh.Admin.Pages.Pois;
 [Authorize]
 public class DetailModel : PageModel
 {
-    private readonly PoiService _poiService;
-    private readonly AudioService _audioService;
+    private readonly RestaurantService _restaurantService;
+    
+    private readonly AudioService _audioService; 
 
-    public Poi? Poi { get; set; }
-    public List<AudioFile> AudioFiles { get; set; } = [];
+    public Restaurant? Poi { get; set; }
+    
+    public List<AudioFile> AudioFiles { get; set; } = []; 
 
-    public DetailModel(PoiService poiService, AudioService audioService)
+    public DetailModel(RestaurantService restaurantService, AudioService audioService)
     {
         _poiService = poiService;
         _audioService = audioService;
@@ -53,4 +56,4 @@ public class DetailModel : PageModel
         TempData["Message"] = "Đã xóa file audio.";
         return RedirectToPage(new { id });
     }
-}
+} */

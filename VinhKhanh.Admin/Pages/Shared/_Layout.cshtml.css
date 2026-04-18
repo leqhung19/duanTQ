@@ -1,48 +1,252 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
-
-a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+﻿<!DOCTYPE html >
+<html lang="vi" >
+<head >
+<meta charset="utf-8"/ >
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/ >
+<title > @ViewData["Title"] — VinhKhanh Admin</title >
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/ >
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/ >
+<style >
+:root {
+    --sidebar-bg: #1a2332;
+    --sidebar-width: 220px;
+    --accent: #00c896;
 }
 
-a {
-  color: #0077cc;
+body {
+    display: flex;
+    min-height: 100vh;
+    background: #f0f2f5;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+/* ── SIDEBAR ── */
+#sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    transition: width .25s;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 100;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+    #sidebar.collapsed {
+        width: 60px;
+    }
+
+.sidebar-logo {
+    padding: 1.2rem 1rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+    white-space: nowrap;
+    overflow: hidden;
 }
 
-.border-top {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+    .sidebar-logo span {
+        display: inline-block;
+        transition: opacity .2s;
+    }
+
+#sidebar.collapsed .sidebar-logo span {
+    opacity: 0;
+    width: 0;
 }
 
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+.nav-item-sb {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    padding: .75rem 1rem;
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: .88rem;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: background .2s, color .2s;
+    border-left: 3px solid transparent;
 }
 
-button.accept-policy {
-  font-size: 1rem;
-  line-height: inherit;
+    .nav-item-sb:hover {
+        background: rgba(255,255,255,.08);
+        color: #fff;
+    }
+
+    .nav-item-sb.active {
+        background: rgba(0,200,150,.12);
+        color: var(--accent);
+        border-left-color: var(--accent);
+    }
+
+    .nav-item-sb .icon {
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        width: 22px;
+        text-align: center;
+    }
+
+    .nav-item-sb .label {
+        transition: opacity .2s;
+    }
+
+#sidebar.collapsed .nav-item-sb .label {
+    opacity: 0;
+    width: 0;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.sidebar-section {
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,.3);
+    padding: .5rem 1rem .2rem;
 }
+
+#sidebar.collapsed .sidebar-section {
+    display: none;
+}
+
+/* ── MAIN ── */
+#main {
+    margin-left: var(--sidebar-width);
+    flex: 1;
+    transition: margin-left .25s;
+    min-height: 100vh;
+}
+
+#sidebar.collapsed ~ #main {
+    margin-left: 60px;
+}
+
+.topbar {
+    background: white;
+    padding: .75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+    .topbar .user-info {
+        font-size: .85rem;
+        color: #555;
+    }
+
+/* Toggle button */
+#sidebarToggle {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.7);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: .5rem;
+    margin: .5rem;
+    align-self: flex-end;
+}
+
+@media(max-width:768px) {
+    #sidebar {
+        width: 60px;
+    }
+
+    #main {
+        margin-left: 60px;
+    }
+
+    #sidebar.collapsed {
+        width: 0;
+        overflow: hidden;
+    }
+
+        #sidebar.collapsed ~ #main {
+            margin-left: 0;
+        }
+}
+
+</style >
+</head >
+<body >
+<!-- ══ SIDEBAR ══ -->
+<nav id="sidebar" >
+<div class="sidebar-logo" >
+🍜 <span > VinhKhanh</span >
+</div >
+
+<button id="sidebarToggle" title="Thu gọn" > ☰</button >
+
+<div style="flex:1;overflow-y:auto;" >
+<div class="sidebar-section" > Chức năng</div >
+
+<a class="nav-item-sb @(ViewData["ActivePage"]?.ToString()=="Dashboard"?"active":"")"
+asp-page="/Index" >
+<span class="icon" > 📊</span >
+<span class="label" > Tổng quan</span >
+</a >
+
+<a class="nav-item-sb @(ViewData["ActivePage"]?.ToString()=="Pois"?"active":"")"
+asp-page="/Pois/Index" >
+<span class="icon" > 📍</span >
+<span class="label" > Điểm POI</span >
+</a >
+
+<a class="nav-item-sb @(ViewData["ActivePage"]?.ToString()=="QR"?"active":"")"
+asp-page="/QR/Index" >
+<span class="icon" > 📷</span >
+<span class="label" > Mã QR</span >
+</a >
+
+<a class="nav-item-sb @(ViewData["ActivePage"]?.ToString()=="History"?"active":"")"
+asp-page="/Analytics/Index" >
+<span class="icon" > 📈</span >
+<span class="label" > Lịch sử nghe</span >
+</a >
+
+<div class="sidebar-section" style="margin-top:.5rem;" > Hệ thống</div >
+
+<a class="nav-item-sb @(ViewData["ActivePage"]?.ToString()=="Users"?"active":"")"
+asp-page="/Admin/Users" >
+<span class="icon" > 👤</span >
+<span class="label" > Quản trị viên</span >
+</a >
+</div >
+
+@if (User.Identity?.IsAuthenticated == true) {
+    <div style="padding:.8rem 1rem;border-top:1px solid rgba(255,255,255,.1);"> <div style="color:rgba(255,255,255,.5);font-size:.72rem;white-space:nowrap;overflow:hidden;"> @User.Identity.Name </div> <form method="post" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/"> <button class="nav-item-sb" style="background:none;border:none;width:100%;text-align:left;color:rgba(255,100,100,.7);"> <span class="icon">🚪</span> <span class="label">Đăng xuất</span> </button> </form> </div>
+}
+
+</nav >
+<!-- ══ MAIN CONTENT ══ -->
+<div id="main" >
+<div class="topbar" >
+<div style="font-weight:600;color:#333;" > @ViewData["Title"]</div >
+<div class="user-info" >
+Xin chào, <strong > @User.Identity?.Name</strong >
+</div >
+</div >
+
+<div class="p-4" >
+@RenderBody()
+</div >
+</div >
+
+<script src="~/lib/jquery/dist/jquery.min.js" > </script >
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" > </script >
+<script >
+document.getElementById('sidebarToggle')?.addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    localStorage.setItem('sidebarCollapsed',
+        document.getElementById('sidebar').classList.contains('collapsed'));
+});
+// Khôi phục trạng thái
+if (localStorage.getItem('sidebarCollapsed') === 'true')
+document.getElementById('sidebar').classList.add('collapsed');
+</script >
+@await RenderSectionAsync("Scripts", required: false)
+</body >
+</html >

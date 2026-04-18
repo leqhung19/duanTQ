@@ -6,32 +6,29 @@ namespace VinhKhanh.Admin.Data;
 
 public class AppDbContext : IdentityDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options) { }
 
-    public DbSet<Poi> Pois { get; set; }
-    public DbSet<AudioFile> AudioFiles { get; set; }
-    public DbSet<Translation> Translations { get; set; }
+    public DbSet<Restaurant> Restaurants { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<QRCode> QRCodes { get; set; }
     public DbSet<ListenLog> ListenLogs { get; set; }
+    public DbSet<ActiveSession> ActiveSessions { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder b)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(b);
 
-        // Index để truy vấn nhanh theo vị trí địa lý
-        builder.Entity<Poi>()
-            .HasIndex(p => new { p.Latitude, p.Longitude });
+        b.Entity<Restaurant>()
+         .HasIndex(r => new { r.Latitude, r.Longitude });
 
-        // Index để tìm audio theo POI + ngôn ngữ
-        builder.Entity<AudioFile>()
-            .HasIndex(a => new { a.PoiId, a.Language });
+        b.Entity<ListenLog>()
+         .HasIndex(l => l.ListenedAt);
 
-        // Index analytics theo thời gian
-        builder.Entity<ListenLog>()
-            .HasIndex(l => l.ListenedAt);
+        b.Entity<ActiveSession>()
+         .HasIndex(s => s.ConnectionId).IsUnique();
 
-        // Unique: mỗi POI chỉ có 1 bản dịch mỗi ngôn ngữ
-        builder.Entity<Translation>()
-            .HasIndex(t => new { t.PoiId, t.Language })
-            .IsUnique();
+        // Map đúng tên bảng trong SQL
+        b.Entity<QRCode>().ToTable("QRCodes");
     }
 }

@@ -1,0 +1,117 @@
+﻿@page "{id:int}"
+@model VinhKhanh.Admin.Pages.Pois.EditModel
+@{
+    ViewData["Title"] = "Sửa điểm thuyết minh";
+}
+
+<h2>
+    @if (TempData["Message"] is string msg)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            @msg
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    Sửa điểm — <em>@Model.Poi?.Name</em>
+</h2>
+<a asp-page="Index" class="btn btn-sm btn-outline-secondary mb-3">← Quay lại</a>
+
+<form method="post">
+    <input type="hidden" asp-for="Poi.Id" />
+    @*
+    <input type="hidden" asp-for="Poi.OwnerId" /> *@
+    <input type="hidden" asp-for="Poi.CreatedAt" />
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label asp-for="Poi.Name" class="form-label">
+                    Tên điểm <span class="text-danger">*</span>
+                </label>
+                <input asp-for="Poi.Name" class="form-control" />
+                <span asp-validation-for="Poi.Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Poi.Description_vi" class="form-label">
+                    Mô tả tiếng Việt
+                </label>
+                <textarea asp-for="Poi.Description_vi" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Poi.Description_en" class="form-label">
+                    Mô tả tiếng Anh
+                </label>
+                <textarea asp-for="Poi.Description_en" class="form-control" rows="4"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Poi.RadiusMeters" class="form-label">
+                    Bán kính kích hoạt: <strong id="radiusVal">@Model.Poi?.RadiusMeters</strong> mét
+                </label>
+                <input asp-for="Poi.RadiusMeters" class="form-range" type="range"
+                       min="10" max="100" step="5"
+                       oninput="document.getElementById('radiusVal').textContent=this.value" />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Poi.Priority" class="form-label">
+                    Mức ưu tiên (0–10)
+                </label>
+                <input asp-for="Poi.Priority" class="form-control" type="number" min="0" max="10" />
+            </div>
+
+            <div class="mb-3 form-check">
+                <input asp-for="Poi.IsActive" class="form-check-input" type="checkbox" />
+                <label asp-for="Poi.IsActive" class="form-check-label">Đang hoạt động</label>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="mb-2">
+                <label class="form-label">Vị trí trên bản đồ</label>
+                <div id="map" style="height:300px;border:1px solid #ccc;border-radius:8px;"></div>
+                <small class="text-muted">Nhấn bản đồ để thay đổi vị trí</small>
+            </div>
+            <div class="row mt-2">
+                <div class="col">
+                    <label asp-for="Poi.Latitude" class="form-label">Vĩ độ</label>
+                    <input asp-for="Poi.Latitude" class="form-control" id="lat" />
+                </div>
+                <div class="col">
+                    <label asp-for="Poi.Longitude" class="form-label">Kinh độ</label>
+                    <input asp-for="Poi.Longitude" class="form-control" id="lng" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+        <a asp-page="Index" class="btn btn-outline-secondary">Huỷ</a>
+    </div>
+</form>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const initLat = @Model.Poi?.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? 10.7572;
+    const initLng = @Model.Poi?.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? 106.6931;
+
+    const map = L.map('map').setView([initLat, initLng], 17);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker = L.marker([initLat, initLng]).addTo(map);
+
+    map.on('click', function (e) {
+    const { lat, lng } = e.latlng;
+    document.getElementById('lat').value = lat.toFixed(7);
+    document.getElementById('lng').value = lng.toFixed(7);
+    marker.setLatLng(e.latlng);
+    });
+</script>

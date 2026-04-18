@@ -9,7 +9,7 @@
     "Parameters": [
       {
         "Name": "req",
-        "Type": "VinhKhanh.Admin.Controllers.LogListenRequest",
+        "Type": "VinhKhanh.Admin.Controllers.LogRequest",
         "IsRequired": true
       }
     ],
@@ -27,12 +27,23 @@
   },
   {
     "ContainingType": "VinhKhanh.Admin.Controllers.SyncController",
-    "Method": "GetVersion",
-    "RelativePath": "api/Sync/version",
+    "Method": "PreviewTts",
+    "RelativePath": "api/tts/preview",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
-    "Parameters": [],
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "lang",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
     "ReturnTypes": []
   }
 ]

@@ -1,5 +1,9 @@
+wwwroot\Audio\1\poi_1_en_1775828396.mp3
+wwwroot\Audio\2\poi_2_en_1775831736.mp3
+wwwroot\Audio\2\poi_2_vi_1775829240.mp3
 wwwroot\css\site.css
 wwwroot\favicon.ico
+wwwroot\images\0e063a6b-4216-40ae-8f95-f0603159cf59.jpg
 wwwroot\js\site.js
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css
 wwwroot\lib\bootstrap\dist\css\bootstrap-grid.css.map

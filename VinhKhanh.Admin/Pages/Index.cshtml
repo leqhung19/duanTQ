@@ -1,88 +1,153 @@
 ﻿@page
-@model IndexModel
+@model VinhKhanh.Admin.Pages.IndexModel
 @{
-    ViewData["Title"] = "Trang chủ";
+    ViewData["Title"] = "Tổng quan";
+    ViewData["ActivePage"] = "Dashboard";
 }
 
-@if (User.Identity?.IsAuthenticated == true)
-{
-    <div class="row g-4 mt-2">
-
-        <div class="col-12">
-            <div class="p-4 rounded-3"
-                 style="background:linear-gradient(135deg,#1565c0,#1976d2);color:white;">
-                <h2 class="fw-bold mb-1">Chào mừng, @User.Identity.Name</h2>
-                <p class="mb-0 opacity-75">
-                    Hệ thống quản trị nội dung — Phố ẩm thực Vĩnh Khánh
-                </p>
-            </div>
-        </div>
-
-        <!-- Card: Điểm thuyết minh -->
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center py-4">
-                    <div style="font-size:3rem;">📍</div>
-                    <h5 class="card-title mt-2">Điểm thuyết minh</h5>
-                    <p class="card-text text-muted small">
-                        Thêm, sửa, xóa các điểm POI trên phố Vĩnh Khánh
-                    </p>
-                    <a asp-page="/Pois/Index" class="btn btn-primary mt-2">
-                        Quản lý POI
-                    </a>
+<!-- Stat cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">POI hoạt động</div>
+                <div class="fs-3 fw-bold text-primary">
+                    @Model.ActivePois / @Model.TotalPois
                 </div>
             </div>
         </div>
-
-        <!-- Card: Audio -->
-        <div class="col-md-4">
-            <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body text-center py-4">
-                    <div style="font-size:3rem;">🎵</div>
-                    <h5 class="card-title mt-2">File Audio</h5>
-                    <p class="card-text text-muted small">
-                        Upload và quản lý file thuyết minh theo ngôn ngữ
-                    </p>
-                    <a asp-page="/Pois/Index" class="btn btn-outline-primary mt-2">
-                        Vào từ POI
-                    </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Người dùng app hiện tại</div>
+                <div class="fs-3 fw-bold text-success" id="activeCount">
+                    @Model.ActiveUsers
+                </div>
+                <div id="liveDot" class="@(Model.ActiveUsers>0?"":"d-none")"
+                     style="display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;color:#2e7d32;">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#2e7d32;
+                                 animation:pulse 1.5s infinite;display:inline-block;"></span> Live
                 </div>
             </div>
         </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Lượt nghe hôm nay</div>
+                <div class="fs-3 fw-bold text-warning">@Model.TodayListens</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tổng lượt nghe</div>
+                <div class="fs-3 fw-bold text-info">@Model.TotalListens</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <!-- Card: Analytics (chỉ Admin) -->
-        @if (User.IsInRole("Admin"))
-        {
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center py-4">
-                        <div style="font-size:3rem;">📊</div>
-                        <h5 class="card-title mt-2">Thống kê</h5>
-                        <p class="card-text text-muted small">
-                            Lượt nghe, top POI, heatmap người dùng
-                        </p>
-                        <a asp-page="/Analytics/Index" class="btn btn-outline-success mt-2">
-                            Xem thống kê
-                        </a>
+<div class="row g-3">
+    <!-- Điểm được nghe nhiều nhất -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white fw-600">🏆 Điểm được nghe nhiều nhất</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th>#</th><th>Tên điểm</th><th>Lượt nghe</th></tr>
+                    </thead>
+                    <tbody>
+                    @{ int rank = 1; }
+                    @foreach (var item in Model.TopPois)
+                    {
+                        <tr>
+                            <td class="text-muted">@rank</td>
+                            <td><strong>@item.Name</strong></td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:6px;">
+                                        <div class="progress-bar bg-success"
+                                             style="width:@item.Percent%"></div>
+                                    </div>
+                                    <span class="small">@item.Count</span>
+                                </div>
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ngôn ngữ đang dùng -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-600">🌐 Ngôn ngữ</div>
+            <div class="card-body">
+                @foreach (var lang in Model.LanguageStats)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge"
+                              style="background:@(lang.Lang=="vi"?"#1565c0":lang.Lang=="en"?"#2e7d32":"#e65100");
+                                     color:white;font-size:.8rem;padding:.3rem .7rem;">
+                            @lang.Lang.ToUpper()
+                        </span>
+                        <strong>@lang.Count</strong>
                     </div>
-                </div>
+                }
             </div>
-        }
+        </div>
+    </div>
 
+    <!-- Lượt nghe gần nhất -->
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white fw-600">🕐 Gần nhất</div>
+            <div class="card-body p-0">
+                @foreach (var log in Model.RecentLogs)
+                {
+                    <div class="px-3 py-2 border-bottom">
+                        <div class="small fw-bold text-truncate">
+                            @(log.Restaurant?.Name ?? "?")
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge bg-secondary" style="font-size:.7rem;">
+                                @log.Language.ToUpper()
+                            </span>
+                            <small class="text-muted">
+                                @log.ListenedAt.ToString("HH:mm")
+                            </small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+<style>
+@@keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.4;transform:scale(1.4);}
 }
-else
-{
-    <!-- Chưa đăng nhập -->
-    <div class="text-center py-5">
-        <div style="font-size:4rem;">🍜</div>
-        <h2 class="fw-bold mt-3">Vĩnh Khánh Admin</h2>
-        <p class="text-muted">
-            Hệ thống quản trị nội dung thuyết minh tự động đa ngôn ngữ
-        </p>
-        <a asp-area="Identity" asp-page="/Account/Login"
-               class="btn btn-primary btn-lg mt-2">
-            Đăng nhập để tiếp tục
-        </a>
-    </div>
+</style>
+<script>
+const hub = new signalR.HubConnectionBuilder()
+    .withUrl("/hubs/presence").withAutomaticReconnect().build();
+
+hub.on("ActiveUsersUpdated", count => {
+    document.getElementById("activeCount").textContent = count;
+    const dot = document.getElementById("liveDot");
+    count > 0 ? dot.classList.remove("d-none") : dot.classList.add("d-none");
+});
+hub.start().catch(e => console.error("SignalR:", e));
+</script>
 }
