@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
+             x:Class="DoAn.Views.QRPage"
+             Title="Quét QR"
+             Shell.NavBarIsVisible="False">
+
+    <Grid>
+
+        <!-- Camera QR Scanner -->
+        <zxing:CameraBarcodeReaderView
+            x:Name="barcodeReader"
+            BarcodesDetected="OnBarcodesDetected"
+            VerticalOptions="Fill"
+            HorizontalOptions="Fill"/>
+
+        <!-- Overlay nền tối -->
+        <BoxView BackgroundColor="#88000000"
+                 VerticalOptions="Fill"
+                 HorizontalOptions="Fill"/>
+
+        <!-- Khung quét ở giữa -->
+        <Border HeightRequest="250"
+                WidthRequest="250"
+                BackgroundColor="Transparent"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Stroke="White"
+                StrokeThickness="2">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16"/>
+            </Border.StrokeShape>
+            <BoxView BackgroundColor="Transparent"/>
+        </Border>
+
+        <!-- Header -->
+        <VerticalStackLayout VerticalOptions="Start"
+                             HorizontalOptions="Center"
+                             Margin="0,60,0,0"
+                             Spacing="8">
+            <Label Text="📷 Quét mã QR"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalOptions="Center"/>
+            <Label Text="Hướng camera vào mã QR tại điểm dừng"
+                   FontSize="14"
+                   TextColor="#CCFFFFFF"
+                   HorizontalOptions="Center"/>
+        </VerticalStackLayout>
+
+        <!-- Panel kết quả -->
+        <Border x:Name="ResultPanel"
+                IsVisible="False"
+                BackgroundColor="White"
+                Margin="16,0,16,40"
+                VerticalOptions="End"
+                StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="20"/>
+            </Border.StrokeShape>
+            <Grid RowDefinitions="130,Auto,Auto,Auto,Auto">
+
+                <!-- Ảnh quán -->
+                <Image x:Name="ResultImage"
+                       Grid.Row="0"
+                       Aspect="AspectFill"
+                       HeightRequest="130"/>
+
+                <!-- Badge đã quét -->
+                <Border Grid.Row="0"
+                        BackgroundColor="#4CAF50"
+                        Padding="8,4"
+                        Margin="12,10,0,0"
+                        VerticalOptions="Start"
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="12"/>
+                    </Border.StrokeShape>
+                    <Label Text="✓ Đã quét"
+                           TextColor="White"
+                           FontSize="12"
+                           FontAttributes="Bold"/>
+                </Border>
+
+                <!-- Nút đóng -->
+                <Button Text="✕"
+                        Clicked="OnCloseResult"
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontSize="18"
+                        HeightRequest="40"
+                        WidthRequest="40"
+                        VerticalOptions="Start"
+                        HorizontalOptions="End"
+                        Margin="0,4,4,0"
+                        Grid.Row="0"/>
+
+                <!-- Tên quán -->
+                <Label x:Name="ResultName"
+                       Grid.Row="1"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       TextColor="#212121"
+                       Margin="16,12,16,2"/>
+
+                <!-- Địa chỉ -->
+                <Label x:Name="ResultAddress"
+                       Grid.Row="2"
+                       FontSize="13"
+                       TextColor="#757575"
+                       Margin="16,0,16,4"/>
+
+                <!-- Giờ + Giá -->
+                <HorizontalStackLayout Grid.Row="3"
+                                       Margin="16,0,16,8"
+                                       Spacing="16">
+                    <Label x:Name="ResultOpenTime"
+                           FontSize="13"
+                           TextColor="#4CAF50"/>
+                    <Label x:Name="ResultPrice"
+                           FontSize="13"
+                           TextColor="#FF5722"
+                           FontAttributes="Bold"/>
+                </HorizontalStackLayout>
+
+                <!-- Nút xem chi tiết -->
+                <Button x:Name="DetailButton"
+                        Grid.Row="4"
+                        Text="Xem chi tiết →"
+                        Clicked="OnViewDetail"
+                        BackgroundColor="#FF5722"
+                        TextColor="White"
+                        CornerRadius="0"
+                        HeightRequest="48"
+                        FontSize="15"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading -->
+        <Border x:Name="LoadingPanel"
+                IsVisible="False"
+                BackgroundColor="#CC000000"
+                Padding="24"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16"/>
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                <ActivityIndicator IsRunning="True" Color="White"/>
+                <Label Text="Đang tra cứu..."
+                       TextColor="White"
+                       FontSize="14"
+                       HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Không tìm thấy -->
+        <Border x:Name="NotFoundPanel"
+                IsVisible="False"
+                BackgroundColor="#CC000000"
+                Padding="24"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                StrokeThickness="0">
+            <Border.StrokeShape>
+                <RoundRectangle CornerRadius="16"/>
+            </Border.StrokeShape>
+            <VerticalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Label Text="❌"
+                       FontSize="40"
+                       HorizontalOptions="Center"/>
+                <Label Text="Không tìm thấy quán"
+                       TextColor="White"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+                <Label Text="Mã QR không hợp lệ"
+                       TextColor="#CCFFFFFF"
+                       FontSize="13"
+                       HorizontalOptions="Center"/>
+                <Button Text="Thử lại"
+                        Clicked="OnRetry"
+                        BackgroundColor="#FF5722"
+                        TextColor="White"
+                        CornerRadius="8"
+                        HeightRequest="40"/>
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+</ContentPage>

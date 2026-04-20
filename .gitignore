@@ -1,0 +1,38 @@
+# Visual Studio
+.vs/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build output
+**/bin/
+**/obj/
+[Bb]uild/
+[Rr]elease/
+[Dd]ebug/
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+TestResults/
+*.nupkg
+*.snupkg
+
+# .NET MAUI / local SDK state
+**/.dotnet-home/
+**/Platforms/**/bin/
+**/Platforms/**/obj/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.cache
+
+# OS files
+Thumbs.db
+desktop.ini
+.DS_Store
