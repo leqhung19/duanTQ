@@ -74,6 +74,7 @@ CREATE TABLE QRCodes (
     RestaurantId INT NOT NULL FOREIGN KEY REFERENCES Restaurants(Id)
                      ON DELETE CASCADE,
     QRContent    NVARCHAR(500) NOT NULL,  -- Ví dụ: "VK:1"
+    ImagePath    NVARCHAR(500),
     IsActive     BIT DEFAULT 1,
     CreatedAt    DATETIME DEFAULT GETDATE()
 );

@@ -12,6 +12,7 @@ public class AppDbContext : IdentityDbContext
     public DbSet<Restaurant> Restaurants { get; set; }
     public DbSet<Category> Categories { get; set; }
     public DbSet<QRCode> QRCodes { get; set; }
+    public DbSet<AudioFile> AudioFiles { get; set; }
     public DbSet<ListenLog> ListenLogs { get; set; }
     public DbSet<ActiveSession> ActiveSessions { get; set; }
 
@@ -25,10 +26,14 @@ public class AppDbContext : IdentityDbContext
         b.Entity<ListenLog>()
          .HasIndex(l => l.ListenedAt);
 
+        b.Entity<AudioFile>()
+         .HasIndex(a => new { a.RestaurantId, a.Language });
+
         b.Entity<ActiveSession>()
          .HasIndex(s => s.ConnectionId).IsUnique();
 
         // Map đúng tên bảng trong SQL
         b.Entity<QRCode>().ToTable("QRCodes");
+        b.Entity<AudioFile>().ToTable("AudioFiles");
     }
 }

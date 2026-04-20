@@ -21,8 +21,6 @@ public class SessionCleanupService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
-
             using var scope = _scopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -37,6 +35,8 @@ public class SessionCleanupService : BackgroundService
                 await db.SaveChangesAsync(stoppingToken);
                 _logger.LogInformation("Đã dọn {Count} session chết", dead.Count);
             }
+
+            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
         }
     }
 }

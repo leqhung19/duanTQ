@@ -9,8 +9,8 @@ public static class DbSeeder
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
 
-        // Tạo 2 roles theo PRD
-        string[] roles = ["Admin", "Owner"];
+        // Web chi cho phep tai khoan quan tri vien.
+        string[] roles = ["Admin"];
         foreach (var role in roles)
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));

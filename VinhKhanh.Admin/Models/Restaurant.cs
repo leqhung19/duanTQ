@@ -17,6 +17,7 @@ public class Restaurant
     // Mô tả ngắn
     public string? Description_vi { get; set; }
     public string? Description_en { get; set; }
+    public string? Description_kr { get; set; }
     public string? Description_cn { get; set; }
 
     // Liên hệ
@@ -34,6 +35,7 @@ public class Restaurant
     // Nội dung TTS đọc khi Geofence kích hoạt
     public string? AudioContent_vi { get; set; }
     public string? AudioContent_en { get; set; }
+    public string? AudioContent_kr { get; set; }
     public string? AudioContent_cn { get; set; }
 
     public bool IsActive { get; set; } = true;
@@ -44,6 +46,7 @@ public class Restaurant
     public Category? Category { get; set; }
     public ICollection<ListenLog> ListenLogs { get; set; } = [];
     public ICollection<QRCode> QRCodes { get; set; } = [];
+    public ICollection<AudioFile> AudioFiles { get; set; } = [];
 }
 
 public class Category
@@ -61,8 +64,22 @@ public class QRCode
     public int Id { get; set; }
     public int RestaurantId { get; set; }
     public string QRContent { get; set; } = string.Empty;
+    public string? ImagePath { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public Restaurant? Restaurant { get; set; }
+}
+
+public class AudioFile
+{
+    public int Id { get; set; }
+    public int RestaurantId { get; set; }
+    public string Language { get; set; } = "vi";
+    public string FileName { get; set; } = string.Empty;
+    public string FilePath { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
+    public bool IsPublished { get; set; } = true;
+    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
     public Restaurant? Restaurant { get; set; }
 }
 

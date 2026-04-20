@@ -39,16 +39,16 @@ public class TranslationService
         }
     }
 
-    // Từ 1 ngôn ngữ đã có, tự dịch sang 2 ngôn ngữ còn lại
+    // Tu 1 ngon ngu da co, tu dich sang cac ngon ngu con lai.
     public async Task AutoFillTranslationsAsync(
-        string? vi, string? en, string? cn,
-        Action<string> setVi, Action<string> setEn, Action<string> setCn)
+        string? vi, string? en, string? kr, string? cn,
+        Action<string> setVi, Action<string> setEn, Action<string> setKr, Action<string> setCn)
     {
-        // Xác định nguồn
         string? source = null;
         string srcLang = "";
         if (!string.IsNullOrWhiteSpace(vi)) { source = vi; srcLang = "vi"; }
         else if (!string.IsNullOrWhiteSpace(en)) { source = en; srcLang = "en"; }
+        else if (!string.IsNullOrWhiteSpace(kr)) { source = kr; srcLang = "ko"; }
         else if (!string.IsNullOrWhiteSpace(cn)) { source = cn; srcLang = "zh-CN"; }
 
         if (source is null) return;
@@ -62,6 +62,11 @@ public class TranslationService
         {
             var t = await TranslateAsync(source, $"{srcLang}|en");
             if (t is not null) setEn(t);
+        }
+        if (string.IsNullOrWhiteSpace(kr) && srcLang != "ko")
+        {
+            var t = await TranslateAsync(source, $"{srcLang}|ko");
+            if (t is not null) setKr(t);
         }
         if (string.IsNullOrWhiteSpace(cn) && srcLang != "zh-CN")
         {

@@ -28,7 +28,8 @@ public class AppPresenceHub : Hub
         });
         await _db.SaveChangesAsync();
 
-        var count = await _db.ActiveSessions.CountAsync();
+        var deadline = DateTime.Now.AddMinutes(-3);
+        var count = await _db.ActiveSessions.CountAsync(s => s.LastPing >= deadline);
         await Clients.All.SendAsync("ActiveUsersUpdated", count);
         await base.OnConnectedAsync();
     }
@@ -39,7 +40,8 @@ public class AppPresenceHub : Hub
             .FirstOrDefaultAsync(s => s.ConnectionId == Context.ConnectionId);
         if (s is not null) { _db.ActiveSessions.Remove(s); await _db.SaveChangesAsync(); }
 
-        var count = await _db.ActiveSessions.CountAsync();
+        var deadline = DateTime.Now.AddMinutes(-3);
+        var count = await _db.ActiveSessions.CountAsync(s => s.LastPing >= deadline);
         await Clients.All.SendAsync("ActiveUsersUpdated", count);
         await base.OnDisconnectedAsync(ex);
     }

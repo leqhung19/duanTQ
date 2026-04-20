@@ -1,13 +1,17 @@
-﻿@page
+@page
 @model VinhKhanh.Admin.Pages.Admin.UsersModel
 @{
-    ViewData["Title"] = "Quản lý tài khoản";
+    ViewData["Title"] = "Quan ly admin";
+    ViewData["ActivePage"] = "Users";
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Quản lý tài khoản</h2>
+    <div>
+        <h2 class="mb-1">Quan ly tai khoan admin</h2>
+        <div class="text-muted">Chi tai khoan co quyen Admin moi dang nhap va quan tri duoc website.</div>
+    </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-        + Thêm tài khoản
+        + Them admin
     </button>
 </div>
 
@@ -20,12 +24,12 @@
     <div class="alert alert-danger">@err</div>
 }
 
-<table class="table table-hover">
+<table class="table table-hover align-middle">
     <thead class="table-dark">
         <tr>
             <th>Email</th>
-            <th>Vai trò</th>
-            <th>Thao tác</th>
+            <th>Quyen</th>
+            <th style="width:140px;">Thao tac</th>
         </tr>
     </thead>
     <tbody>
@@ -33,22 +37,19 @@
         {
             <tr>
                 <td>@user.Email</td>
+                <td><span class="badge bg-danger">Admin</span></td>
                 <td>
-                    @foreach (var role in user.Roles)
-                    {
-                        <span class="badge @(role == "Admin" ? "bg-danger" : "bg-info")">
-                            @role
-                        </span>
-                    }
-                </td>
-                <td>
-                    @if (user.Email != "admin@vinhkhanh.local")
+                    @if (!user.IsProtected)
                     {
                         <form method="post" asp-page-handler="Delete"
                               asp-route-userId="@user.Id"
-                              onsubmit="return confirm('Xóa tài khoản @user.Email?')">
-                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                              onsubmit="return confirm('Xoa tai khoan @user.Email?')">
+                            <button class="btn btn-sm btn-outline-danger">Xoa</button>
                         </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Mac dinh</span>
                     }
                 </td>
             </tr>
@@ -56,12 +57,11 @@
     </tbody>
 </table>
 
-<!-- Modal thêm tài khoản -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Thêm tài khoản mới</h5>
+                <h5 class="modal-title">Them tai khoan admin</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" asp-page-handler="Create">
@@ -69,27 +69,19 @@
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" name="email" class="form-control" required
-                               placeholder="owner@example.com" />
+                               placeholder="admin@example.com" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mật khẩu</label>
+                        <label class="form-label">Mat khau</label>
                         <input type="password" name="password" class="form-control" required
-                               placeholder="Tối thiểu 8 ký tự, có chữ hoa và số" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Vai trò</label>
-                        <select name="role" class="form-select">
-                            <option value="Owner">Owner (Chủ quán)</option>
-                            <option value="Admin">Admin</option>
-                        </select>
+                               placeholder="Toi thieu 8 ky tu, co chu hoa va so" />
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Huỷ
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        Huy
                     </button>
-                    <button type="submit" class="btn btn-primary">Tạo tài khoản</button>
+                    <button type="submit" class="btn btn-primary">Tao admin</button>
                 </div>
             </form>
         </div>

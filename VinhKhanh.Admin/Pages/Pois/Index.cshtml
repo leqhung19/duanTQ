@@ -21,7 +21,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="card border-0 shadow-sm text-center p-3">
-            <div class="text-muted small">Có TTS</div>
+            <div class="text-muted small">Có lời thuyết minh</div>
             <div class="fs-3 fw-bold text-primary">
                 @Model.Restaurants.Count(r => !string.IsNullOrEmpty(r.AudioContent_vi))
             </div>
@@ -33,6 +33,7 @@
             <div class="fs-3 fw-bold text-info">
                 @Model.Restaurants.Count(r =>
                     !string.IsNullOrEmpty(r.AudioContent_en) ||
+                    !string.IsNullOrEmpty(r.AudioContent_kr) ||
                     !string.IsNullOrEmpty(r.AudioContent_cn))
             </div>
         </div>
@@ -103,7 +104,7 @@
                         </div>
                     </div>
 
-                    <!-- Ngôn ngữ TTS có sẵn -->
+                    <!-- Ngôn ngữ thuyết minh tự động có sẵn -->
                     <div class="mb-2">
                         <small class="text-muted me-1">Ngôn ngữ:</small>
                         @if (!string.IsNullOrEmpty(r.AudioContent_vi))
@@ -114,10 +115,19 @@
                         {
                             <span class="badge" style="background:#2e7d32;font-size:.7rem;">EN</span>
                         }
+                        @if (!string.IsNullOrEmpty(r.AudioContent_kr))
+                        {
+                            <span class="badge" style="background:#6a1b9a;font-size:.7rem;">KO</span>
+                        }
                         @if (!string.IsNullOrEmpty(r.AudioContent_cn))
                         {
                             <span class="badge" style="background:#c62828;font-size:.7rem;">CN</span>
                         }
+                    </div>
+
+                    <div class="mb-2">
+                        <small class="text-muted me-1">File thu âm:</small>
+                        <span class="badge bg-secondary" style="font-size:.7rem;">@r.AudioFiles.Count(a => a.IsPublished)</span>
                     </div>
 
                     <!-- Ưu tiên -->
@@ -125,17 +135,29 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="card-footer bg-white border-top-0 d-flex gap-2 pb-3">
-                    <button class="btn btn-sm btn-outline-success flex-grow-1"
-                            onclick="previewTts(@r.Id, 'vi')" title="Nghe thử TTS">
-                        ▶ Nghe thử
-                    </button>
+                <div class="card-footer bg-white border-top-0 pb-3">
+                    <div class="input-group input-group-sm mb-2">
+                        <select class="form-select" id="lang-@r.Id">
+                            <option value="vi">Việt</option>
+                            <option value="en">Anh</option>
+                            <option value="ko">Hàn</option>
+                            <option value="cn">Trung</option>
+                        </select>
+                        <button class="btn btn-outline-success" type="button"
+                                onclick="previewTts(@r.Id, document.getElementById('lang-@r.Id').value)">
+                            Nghe thử thuyết minh
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2">
                     <a asp-page="Edit" asp-route-id="@r.Id"
                        class="btn btn-sm btn-outline-primary">Sửa</a>
+                    <a asp-page="Detail" asp-route-id="@r.Id"
+                       class="btn btn-sm btn-outline-success">File thu âm</a>
                     <form method="post" asp-page-handler="Delete" asp-route-id="@r.Id"
                           onsubmit="return confirm('Xóa @r.Name?')">
                         <button class="btn btn-sm btn-outline-danger">Xóa</button>
                     </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -150,7 +172,13 @@
                 .then(d => {
                     if (d.text) {
                         const utter = new SpeechSynthesisUtterance(d.text);
-                        utter.lang = lang === 'vi' ? 'vi-VN' : lang === 'en' ? 'en-US' : 'zh-CN';
+                        utter.lang = lang === 'vi'
+                            ? 'vi-VN'
+                            : lang === 'en'
+                                ? 'en-US'
+                                : lang === 'ko'
+                                    ? 'ko-KR'
+                                    : 'zh-CN';
                         speechSynthesis.speak(utter);
                     }
                 });

@@ -29,7 +29,8 @@ public class IndexModel : PageModel
 
         TotalPois = await _db.Restaurants.CountAsync();
         ActivePois = await _db.Restaurants.CountAsync(r => r.IsActive);
-        ActiveUsers = await _db.ActiveSessions.CountAsync();
+        var activeDeadline = DateTime.Now.AddMinutes(-3);
+        ActiveUsers = await _db.ActiveSessions.CountAsync(s => s.LastPing >= activeDeadline);
         TodayListens = await _db.ListenLogs.CountAsync(l => l.ListenedAt >= today);
         TotalListens = await _db.ListenLogs.CountAsync();
 

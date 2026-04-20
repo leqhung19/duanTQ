@@ -1,4 +1,5 @@
-﻿CREATE DATABASE DB;
+﻿IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'DoAnDB')
+    CREATE DATABASE DoAnDB;
 GO
 
 USE DoAnDB;
@@ -54,8 +55,25 @@ CREATE TABLE QRCodes (
     Id           INT PRIMARY KEY IDENTITY(1,1),
     RestaurantId INT FOREIGN KEY REFERENCES Restaurants(Id),
     QRContent    NVARCHAR(500) NOT NULL,
+    ImagePath    NVARCHAR(500),
     CreatedAt    DATETIME DEFAULT GETDATE()
 );
+GO
+
+IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AudioFiles')
+CREATE TABLE AudioFiles (
+    Id            INT PRIMARY KEY IDENTITY(1,1),
+    RestaurantId  INT NOT NULL FOREIGN KEY REFERENCES Restaurants(Id) ON DELETE CASCADE,
+    Language      NVARCHAR(10) NOT NULL, -- vi | en | ko | cn
+    FileName      NVARCHAR(260) NOT NULL,
+    FilePath      NVARCHAR(500) NOT NULL,
+    FileSizeBytes BIGINT NOT NULL,
+    IsPublished   BIT DEFAULT 1,
+    UploadedAt    DATETIME DEFAULT GETDATE()
+);
+GO
+
+CREATE INDEX IX_AudioFiles_RestaurantId_Language ON AudioFiles(RestaurantId, Language);
 GO
 
 -- ================================================================

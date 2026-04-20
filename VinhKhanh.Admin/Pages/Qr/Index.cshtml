@@ -1,0 +1,104 @@
+@page
+@model VinhKhanh.Admin.Pages.Qr.IndexModel
+@{
+    ViewData["Title"] = "Mã QR";
+    ViewData["ActivePage"] = "Qr";
+}
+
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @msg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @err
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small">Tổng POI</div>
+            <div class="fs-3 fw-bold">@Model.TotalPoi</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small">Có ảnh QR</div>
+            <div class="fs-3 fw-bold text-success">@Model.PoiWithQrImage</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-4">
+        <div class="card border-0 shadow-sm p-3">
+            <div class="text-muted small">Chưa có ảnh QR</div>
+            <div class="fs-3 fw-bold text-warning">@Model.PoiWithoutQrImage</div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <h5 class="mb-1">Ảnh QR của POI</h5>
+    <div class="text-muted small">
+        Mỗi POI chỉ lưu ảnh QR dùng để dán tại địa điểm. Khi cần đổi mã, chọn ảnh QR mới rồi lưu lại.
+    </div>
+</div>
+
+<div class="row g-3">
+    @foreach (var item in Model.Items)
+    {
+        <div class="col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row g-3 align-items-start">
+                        <div class="col-md-4">
+                            @if (item.HasQrImage)
+                            {
+                                <img src="@item.QrImagePath"
+                                     alt="QR @item.PoiName"
+                                     class="img-fluid"
+                                     style="max-width:220px;width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:white;" />
+                            }
+                            else
+                            {
+                                <div style="width:100%;max-width:220px;aspect-ratio:1;border:1px dashed #cbd5e1;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;color:#64748b;font-size:.9rem;background:#f8fafc;">
+                                    Chưa có ảnh QR
+                                </div>
+                            }
+                        </div>
+
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+                                <div>
+                                    <h6 class="fw-bold mb-1">@item.PoiName</h6>
+                                    <div class="text-muted small">
+                                        @(!string.IsNullOrWhiteSpace(item.Address) ? item.Address : "Chưa có địa chỉ")
+                                    </div>
+                                </div>
+                                <span class="badge @(item.HasQrImage ? "bg-success" : "bg-secondary")">
+                                    @(item.HasQrImage ? "Có ảnh QR" : "Chưa có ảnh")
+                                </span>
+                            </div>
+
+                            <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
+                                <input type="hidden" name="restaurantId" value="@item.PoiId" />
+                                <label class="form-label small text-muted mb-1">Thay đổi ảnh QR</label>
+                                <div class="input-group input-group-sm">
+                                    <input class="form-control" type="file" name="qrImage" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required />
+                                    <button class="btn btn-success">Lưu ảnh</button>
+                                </div>
+                                <div class="form-text">
+                                    Hỗ trợ PNG, JPG, JPEG, WEBP.
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

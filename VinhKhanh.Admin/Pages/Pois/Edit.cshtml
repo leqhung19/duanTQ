@@ -1,117 +1,177 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model VinhKhanh.Admin.Pages.Pois.EditModel
 @{
-    ViewData["Title"] = "Sửa điểm thuyết minh";
+    ViewData["Title"] = "Sua POI";
+    ViewData["ActivePage"] = "Pois";
 }
 
-<h2>
-    @if (TempData["Message"] is string msg)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            @msg
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    Sửa điểm — <em>@Model.Poi?.Name</em>
-</h2>
-<a asp-page="Index" class="btn btn-sm btn-outline-secondary mb-3">← Quay lại</a>
+@if (TempData["Message"] is string msg)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @msg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"> Sửa POIS - <em>@Model.Poi.Name</em></h2>
+    <a asp-page="Index" class="btn btn-sm btn-outline-secondary">Quay lại</a>
+</div>
 
 <form method="post">
     <input type="hidden" asp-for="Poi.Id" />
-    @*
-    <input type="hidden" asp-for="Poi.OwnerId" /> *@
     <input type="hidden" asp-for="Poi.CreatedAt" />
+    <input type="hidden" asp-for="Poi.Image" />
 
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="mb-3">
-                <label asp-for="Poi.Name" class="form-label">
-                    Tên điểm <span class="text-danger">*</span>
-                </label>
-                <input asp-for="Poi.Name" class="form-control" />
-                <span asp-validation-for="Poi.Name" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Poi.Description_vi" class="form-label">
-                    Mô tả tiếng Việt
-                </label>
-                <textarea asp-for="Poi.Description_vi" class="form-control" rows="4"></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Poi.Description_en" class="form-label">
-                    Mô tả tiếng Anh
-                </label>
-                <textarea asp-for="Poi.Description_en" class="form-control" rows="4"></textarea>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Poi.RadiusMeters" class="form-label">
-                    Bán kính kích hoạt: <strong id="radiusVal">@Model.Poi?.RadiusMeters</strong> mét
-                </label>
-                <input asp-for="Poi.RadiusMeters" class="form-range" type="range"
-                       min="10" max="100" step="5"
-                       oninput="document.getElementById('radiusVal').textContent=this.value" />
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Poi.Priority" class="form-label">
-                    Mức ưu tiên (0–10)
-                </label>
-                <input asp-for="Poi.Priority" class="form-control" type="number" min="0" max="10" />
-            </div>
-
-            <div class="mb-3 form-check">
-                <input asp-for="Poi.IsActive" class="form-check-input" type="checkbox" />
-                <label asp-for="Poi.IsActive" class="form-check-label">Đang hoạt động</label>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="mb-2">
-                <label class="form-label">Vị trí trên bản đồ</label>
-                <div id="map" style="height:300px;border:1px solid #ccc;border-radius:8px;"></div>
-                <small class="text-muted">Nhấn bản đồ để thay đổi vị trí</small>
-            </div>
-            <div class="row mt-2">
-                <div class="col">
-                    <label asp-for="Poi.Latitude" class="form-label">Vĩ độ</label>
-                    <input asp-for="Poi.Latitude" class="form-control" id="lat" />
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3 pb-2 border-bottom">Thông tin địa điểm</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Poi.Name" class="form-label">Tên địa điểm</label>
+                    <input asp-for="Poi.Name" class="form-control" />
+                    <span asp-validation-for="Poi.Name" class="text-danger small"></span>
                 </div>
-                <div class="col">
-                    <label asp-for="Poi.Longitude" class="form-label">Kinh độ</label>
-                    <input asp-for="Poi.Longitude" class="form-control" id="lng" />
+                <div class="col-md-6">
+                    <label asp-for="Poi.Address" class="form-label">Địa chỉ</label>
+                    <input asp-for="Poi.Address" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Poi.Phone" class="form-label">SĐt</label>
+                    <input asp-for="Poi.Phone" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Poi.OpenTime" class="form-label">Giờ mở cửa</label>
+                    <input asp-for="Poi.OpenTime" class="form-control" />
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Poi.PriceRange" class="form-label">Khoảng giá</label>
+                    <input asp-for="Poi.PriceRange" class="form-control" />
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="d-flex gap-2 mt-3">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3 pb-2 border-bottom">Mô tả đa ngôn ngữ</h5>
+            <ul class="nav nav-tabs" id="descTab">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#dvi">Việt</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#den">Anh</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#dkr">Hàn</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#dcn">Trung</a></li>
+            </ul>
+            <div class="tab-content border border-top-0 rounded-bottom p-3">
+                <div class="tab-pane fade show active" id="dvi">
+                    <textarea asp-for="Poi.Description_vi" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="den">
+                    <textarea asp-for="Poi.Description_en" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="dkr">
+                    <textarea asp-for="Poi.Description_kr" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="dcn">
+                    <textarea asp-for="Poi.Description_cn" class="form-control" rows="4"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3 pb-2 border-bottom">Lời thuyết minh tự động</h5>
+            <p class="text-muted small mb-2">
+                Dùng khi khách quét QR/đến gần POI mà chưa có file thuyết minh thu âm.
+            </p>
+            <ul class="nav nav-tabs" id="ttsTab">
+                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tvi">Việt</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ten">Anh</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tkr">Hàn</a></li>
+                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tcn">Trung</a></li>
+            </ul>
+            <div class="tab-content border border-top-0 rounded-bottom p-3">
+                <div class="tab-pane fade show active" id="tvi">
+                    <textarea asp-for="Poi.AudioContent_vi" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="ten">
+                    <textarea asp-for="Poi.AudioContent_en" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="tkr">
+                    <textarea asp-for="Poi.AudioContent_kr" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="tab-pane fade" id="tcn">
+                    <textarea asp-for="Poi.AudioContent_cn" class="form-control" rows="4"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="mb-3 pb-2 border-bottom">Vị trí và kích hoạt</h5>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div id="map" style="height:300px;border:1px solid #ccc;border-radius:8px;"></div>
+                    <small class="text-muted">Nhấn bản đồ để thay đổi vị trí.</small>
+                </div>
+                <div class="col-md-6">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label asp-for="Poi.Latitude" class="form-label">Vĩ độ</label>
+                            <input asp-for="Poi.Latitude" class="form-control" id="lat" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Poi.Longitude" class="form-label">Kinh độ</label>
+                            <input asp-for="Poi.Longitude" class="form-control" id="lng" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Poi.RadiusMeters" class="form-label">Bán kính kích hoạt</label>
+                            <input asp-for="Poi.RadiusMeters" class="form-control" type="number" min="10" max="200" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Poi.Priority" class="form-label">Mức ưu tiên</label>
+                            <input asp-for="Poi.Priority" class="form-control" type="number" min="0" max="10" />
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input asp-for="Poi.IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="Poi.IsActive" class="form-check-label">Đang hoạt động</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-        <a asp-page="Index" class="btn btn-outline-secondary">Huỷ</a>
+        <a asp-page="Detail" asp-route-id="@Model.Poi.Id" class="btn btn-outline-success">File thuyết minh thu âm</a>
+        <a asp-page="Index" class="btn btn-outline-secondary">Hủy</a>
     </div>
 </form>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    const initLat = @Model.Poi?.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? 10.7572;
-    const initLng = @Model.Poi?.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? 106.6931;
+@section Scripts {
+    <script>
+        const initLat = @Model.Poi.Latitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        const initLng = @Model.Poi.Longitude.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-    const map = L.map('map').setView([initLat, initLng], 17);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-    }).addTo(map);
+        const map = L.map('map').setView([initLat, initLng], 17);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'OpenStreetMap'
+        }).addTo(map);
 
-    let marker = L.marker([initLat, initLng]).addTo(map);
-
-    map.on('click', function (e) {
-    const { lat, lng } = e.latlng;
-    document.getElementById('lat').value = lat.toFixed(7);
-    document.getElementById('lng').value = lng.toFixed(7);
-    marker.setLatLng(e.latlng);
-    });
-</script>
+        let marker = L.marker([initLat, initLng]).addTo(map);
+        map.on('click', e => {
+            const { lat, lng } = e.latlng;
+            document.getElementById('lat').value = lat.toFixed(7);
+            document.getElementById('lng').value = lng.toFixed(7);
+            marker.setLatLng(e.latlng);
+        });
+    </script>
+}

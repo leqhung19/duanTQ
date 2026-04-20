@@ -1,0 +1,55 @@
+@page "/q/{id:int}"
+@model VinhKhanh.Admin.Pages.Qr.OpenModel
+@{
+    Layout = null;
+    var title = Model.Poi?.Name ?? "VinhKhanh Audio Guide";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <style>
+        body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f7f6;color:#18212b;}
+        .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+        .panel{width:min(480px,100%);background:white;border-radius:8px;padding:24px;box-shadow:0 12px 34px rgba(0,0,0,.12);}
+        .brand{font-weight:700;color:#008f75;margin-bottom:12px;}
+        h1{font-size:24px;margin:0 0 8px;}
+        p{color:#5b6673;line-height:1.55;}
+        .btn{display:block;text-align:center;text-decoration:none;border-radius:8px;padding:12px 14px;margin-top:10px;font-weight:600;}
+        .primary{background:#008f75;color:white;}
+        .secondary{background:#edf3f1;color:#1f473f;}
+        .note{font-size:13px;color:#74808a;margin-top:16px;padding:12px;background:#f6faf9;border-radius:8px;}
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <section class="panel">
+            <div class="brand">VinhKhanh Audio Guide</div>
+            @if (Model.Poi is null)
+            {
+                <h1>Không tìm thấy điểm thuyết minh</h1>
+                <p>Mã QR này không còn hoạt động hoặc POI đã bị tắt.</p>
+            }
+            else
+            {
+                <h1>@Model.Poi.Name</h1>
+                <p>Mở app để nghe thuyết minh tại điểm này. Nếu chưa cài app, hãy dùng bản Android demo hoặc liên hệ nhóm thực hiện để cài bản thử nghiệm.</p>
+                <a class="btn primary" href="@Model.AppDeepLink">Mở app nghe thuyết minh</a>
+                <a class="btn secondary" href="@Model.AndroidDownloadUrl">Tải app Android demo</a>
+                <div class="note">
+                    iPhone không thể tải/cài trực tiếp file app nếu chưa phát hành qua TestFlight hoặc App Store.
+                    Trong buổi demo, hãy dùng Android thật/emulator hoặc bấm "Mở app" nếu thiết bị đã cài app.
+                </div>
+            }
+        </section>
+    </main>
+    @if (Model.Poi is not null)
+    {
+        <script>
+            setTimeout(() => { window.location.href = "@Model.AppDeepLink"; }, 400);
+        </script>
+    }
+</body>
+</html>

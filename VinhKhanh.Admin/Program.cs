@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using VinhKhanh.Admin.Data;
-using VinhKhanh.Admin.Hubs;
 using VinhKhanh.Admin.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,14 +19,26 @@ builder.Services.AddDefaultIdentity<IdentityUser>(o =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
 
-builder.Services.AddRazorPages();
+builder.Services.AddAuthorization(o =>
+{
+    o.AddPolicy("AdminOnly", p => p.RequireRole("Admin"));
+});
+
+builder.Services.AddRazorPages(o =>
+{
+    o.Conventions.AuthorizeFolder("/", "AdminOnly");
+    o.Conventions.AuthorizeAreaFolder("Identity", "/Account", "AdminOnly");
+    o.Conventions.AllowAnonymousToAreaPage("Identity", "/Account/Login");
+    o.Conventions.AllowAnonymousToAreaPage("Identity", "/Account/AccessDenied");
+    o.Conventions.AllowAnonymousToPage("/Qr/Open");
+});
 builder.Services.AddControllers();
-builder.Services.AddSignalR();
 
 // Dịch vụ nghiệp vụ
 builder.Services.AddScoped<RestaurantService>();
 builder.Services.AddScoped<SyncService>();
 builder.Services.AddScoped<TranslationService>();
+builder.Services.AddScoped<AudioService>();
 
 // Dọn session chết mỗi 2 phút
 builder.Services.AddHostedService<SessionCleanupService>();
@@ -38,16 +49,10 @@ builder.Services.AddCors(o => o.AddPolicy("MobileApp", p =>
 
 var app = builder.Build();
 
-// Seed Admin mặc định
+// Khoi tao DB va seed Admin mac dinh
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    using (var scope2  = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        await DbSeeder.SeedRolesAsync(services);
-    }
+    await DatabaseBootstrapper.InitializeAsync(scope.ServiceProvider);
 }
 
 app.UseCors("MobileApp");
@@ -58,6 +63,5 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-app.MapHub<AppPresenceHub>("/hubs/presence");
 
 app.Run();

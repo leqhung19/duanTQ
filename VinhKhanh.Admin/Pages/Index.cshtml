@@ -132,22 +132,10 @@
 </div>
 
 @section Scripts {
-<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <style>
 @@keyframes pulse {
     0%,100%{opacity:1;transform:scale(1);}
     50%{opacity:.4;transform:scale(1.4);}
 }
 </style>
-<script>
-const hub = new signalR.HubConnectionBuilder()
-    .withUrl("/hubs/presence").withAutomaticReconnect().build();
-
-hub.on("ActiveUsersUpdated", count => {
-    document.getElementById("activeCount").textContent = count;
-    const dot = document.getElementById("liveDot");
-    count > 0 ? dot.classList.remove("d-none") : dot.classList.add("d-none");
-});
-hub.start().catch(e => console.error("SignalR:", e));
-</script>
 }

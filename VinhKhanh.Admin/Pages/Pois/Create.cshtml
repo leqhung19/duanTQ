@@ -57,6 +57,9 @@
                         <a class="nav-link" data-bs-toggle="tab" href="#den">🇬🇧 English</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#dkr">🇰🇷 한국어</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" data-bs-toggle="tab" href="#dcn">🇨🇳 中文</a>
                     </li>
                 </ul>
@@ -68,6 +71,10 @@
                     <div class="tab-pane fade" id="den">
                         <textarea asp-for="Restaurant.Description_en" class="form-control"
                                   rows="3" placeholder="Short description in English..."></textarea>
+                    </div>
+                    <div class="tab-pane fade" id="dkr">
+                        <textarea asp-for="Restaurant.Description_kr" class="form-control"
+                                  rows="3" placeholder="한국어 설명..."></textarea>
                     </div>
                     <div class="tab-pane fade" id="dcn">
                         <textarea asp-for="Restaurant.Description_cn" class="form-control"
@@ -110,35 +117,42 @@
                 <label asp-for="Restaurant.IsActive" class="form-check-label">Đang hoạt động</label>
             </div>
 
-            <!-- ── NỘI DUNG TTS ── -->
-            <h5 class="mb-3 pb-2 border-bottom">Nội dung TTS (đọc khi khách đến gần)</h5>
+            <!-- ── LỜI THUYẾT MINH TỰ ĐỘNG ── -->
+            <h5 class="mb-3 pb-2 border-bottom">Lời thuyết minh tự động</h5>
             <p class="text-muted small mb-2">
-                💡 Chỉ cần nhập 1 ngôn ngữ — hệ thống tự dịch sang các ngôn ngữ còn lại khi lưu.
+                💡 Dùng khi khách quét QR/đến gần POI mà chưa có file thuyết minh thu âm. Chỉ cần nhập 1 ngôn ngữ — hệ thống tự dịch sang các ngôn ngữ còn lại khi lưu.
             </p>
             <div class="mb-4">
                 <ul class="nav nav-tabs" id="ttsTab">
                     <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#tvi">🇻🇳 TTS Việt</a>
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tvi">🇻🇳 Thuyết minh Việt</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#ten">🇬🇧 TTS Anh</a>
+                        <a class="nav-link" data-bs-toggle="tab" href="#ten">🇬🇧 Thuyết minh Anh</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#tcn">🇨🇳 TTS Trung</a>
+                        <a class="nav-link" data-bs-toggle="tab" href="#tkr">🇰🇷 Thuyết minh Hàn</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tcn">🇨🇳 Thuyết minh Trung</a>
                     </li>
                 </ul>
                 <div class="tab-content border border-top-0 rounded-bottom p-3">
                     <div class="tab-pane fade show active" id="tvi">
                         <textarea asp-for="Restaurant.AudioContent_vi" class="form-control"
-                                  rows="4" placeholder="Văn bản TTS đọc khi khách đến gần (tiếng Việt)..."></textarea>
+                                  rows="4" placeholder="Lời thuyết minh tự động khi khách quét QR hoặc đến gần POI (tiếng Việt)..."></textarea>
                     </div>
                     <div class="tab-pane fade" id="ten">
                         <textarea asp-for="Restaurant.AudioContent_en" class="form-control"
-                                  rows="4" placeholder="Text for TTS when visitor approaches (English)..."></textarea>
+                                  rows="4" placeholder="Automatic narration text when visitors scan QR or approach this POI (English)..."></textarea>
+                    </div>
+                    <div class="tab-pane fade" id="tkr">
+                        <textarea asp-for="Restaurant.AudioContent_kr" class="form-control"
+                                  rows="4" placeholder="방문자가 QR을 스캔하거나 가까이 왔을 때 들려줄 자동 해설 문장..."></textarea>
                     </div>
                     <div class="tab-pane fade" id="tcn">
                         <textarea asp-for="Restaurant.AudioContent_cn" class="form-control"
-                                  rows="4" placeholder="访客靠近时TTS朗读的文字（中文）..."></textarea>
+                                  rows="4" placeholder="访客扫码或靠近 POI 时播放的自动讲解文字（中文）..."></textarea>
                     </div>
                 </div>
             </div>
