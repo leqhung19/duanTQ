@@ -1,0 +1,71 @@
+﻿@page "/q/{code}"
+@model VinhKhanh.Admin.Pages.Qr.OpenModel
+@{
+    Layout = null;
+    var title = Model.Poi?.Name ?? "VinhKhanh Audio Guide";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title</title>
+    <style>
+        body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#f4f7f6;color:#18212b;}
+        .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+        .panel{width:min(480px,100%);background:white;border-radius:8px;padding:24px;box-shadow:0 12px 34px rgba(0,0,0,.12);}
+        .brand{font-weight:700;color:#008f75;margin-bottom:12px;}
+        h1{font-size:24px;margin:0 0 8px;}
+        p{color:#5b6673;line-height:1.55;}
+        .btn{display:block;text-align:center;text-decoration:none;border-radius:8px;padding:12px 14px;margin-top:10px;font-weight:600;}
+        .primary{background:#008f75;color:white;}
+        .secondary{background:#edf3f1;color:#1f473f;}
+        .suggested{outline:3px solid rgba(0,143,117,.22);}
+        .note{font-size:13px;color:#74808a;margin-top:16px;padding:12px;background:#f6faf9;border-radius:8px;}
+        .device-actions{margin-top:14px;}
+        .muted{font-size:13px;color:#74808a;margin-top:10px;}
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <section class="panel">
+            <div class="brand">VinhKhanh Audio Guide</div>
+            @if (Model.Poi is null)
+            {
+                <h1>Không tìm thấy điểm thuyết minh</h1>
+                <p>Mã QR này không còn hoạt động hoặc POI đã bị tắt.</p>
+            }
+            else
+            {
+                <h1>@Model.Poi.Name</h1>
+                <p>Đang mở app để nghe thuyết minh tại điểm này. Nếu thiết bị Android chưa cài app, hãy tải file APK bên dưới.</p>
+                <a class="btn primary" href="@Model.AppDeepLink">Mở app để nghe thuyết minh</a>
+                <div class="device-actions">
+                    <a class="btn secondary" href="@Model.AndroidDownloadUrl" download>Tải app Android APK</a>
+                    <div class="muted">File APK chỉ cài được trên Android. iPhone không cài được APK.</div>
+                </div>
+                <div class="note">
+                    Mã QR này dùng chung cho nhiều du khách. Mỗi thiết bị cài app sẽ có một mã khách ẩn danh riêng, nên hệ thống vẫn thống kê được nhiều lượt truy cập QR mà không cần tài khoản.
+                </div>
+            }
+        </section>
+    </main>
+    @if (Model.Poi is not null)
+    {
+        <script>
+            const appDeepLink = "@Model.AppDeepLink";
+            const userAgent = navigator.userAgent || "";
+            const isAndroid = /Android/i.test(userAgent);
+
+            setTimeout(() => { window.location.href = appDeepLink; }, 350);
+
+            setTimeout(() => {
+                if (document.hidden) return;
+                if (isAndroid) {
+                    document.querySelector('.secondary')?.classList.add('suggested');
+                }
+            }, 1600);
+        </script>
+    }
+</body>
+</html>

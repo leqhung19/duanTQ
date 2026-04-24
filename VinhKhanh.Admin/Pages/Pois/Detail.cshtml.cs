@@ -6,51 +6,55 @@ using VinhKhanh.Admin.Services;
 
 namespace VinhKhanh.Admin.Pages.Pois;
 
-[Authorize]
+[Authorize(Roles = "Admin")]
 public class DetailModel : PageModel
 {
-    private readonly PoiService _poiService;
+    private readonly RestaurantService _restaurantService;
     private readonly AudioService _audioService;
 
-    public Poi? Poi { get; set; }
+    public Restaurant? Poi { get; set; }
     public List<AudioFile> AudioFiles { get; set; } = [];
 
-    public DetailModel(PoiService poiService, AudioService audioService)
+    public DetailModel(RestaurantService restaurantService, AudioService audioService)
     {
-        _poiService = poiService;
+        _restaurantService = restaurantService;
         _audioService = audioService;
     }
 
-    public async Task OnGetAsync(int id)
+    public async Task<IActionResult> OnGetAsync(int id)
     {
-        Poi = await _poiService.GetByIdAsync(id);
-        AudioFiles = await _audioService.GetByPoiAsync(id);
+        Poi = await _restaurantService.GetByIdAsync(id);
+        if (Poi is null) return NotFound();
+
+        AudioFiles = await _audioService.GetByRestaurantAsync(id);
+        return Page();
     }
 
-    // Upload audio
-    public async Task<IActionResult> OnPostUploadAsync(
-        int poiId, string language, IFormFile file)
+    public async Task<IActionResult> OnPostUploadAsync(int id, string language, IFormFile file)
     {
-        var result = await _audioService.UploadAsync(poiId, language, file);
-        TempData[result is not null ? "Message" : "Error"] =
-            result is not null ? "Upload thành công!" : "Upload thất bại — kiểm tra định dạng và kích thước file.";
+        var (audio, error) = await _audioService.UploadAsync(id, language, file);
+        if (audio is null)
+            TempData["Error"] = error ?? "Upload file thuyết minh thất bại.";
+        else
+            TempData["Message"] = "Đã upload file thuyết minh.";
 
-        return RedirectToPage(new { id = poiId });
-    }
-
-    // Duyệt / huỷ duyệt audio
-    public async Task<IActionResult> OnPostPublishAsync(int audioId, bool publish, int id)
-    {
-        await _audioService.SetPublishedAsync(audioId, publish);
-        TempData["Message"] = publish ? "Đã duyệt audio." : "Đã huỷ duyệt.";
         return RedirectToPage(new { id });
     }
 
-    // Xóa audio
-    public async Task<IActionResult> OnPostDeleteAudioAsync(int audioId, int id)
+    public async Task<IActionResult> OnPostPublishAsync(int id, int audioId, bool publish)
     {
-        await _audioService.DeleteAsync(audioId);
-        TempData["Message"] = "Đã xóa file audio.";
+        var ok = await _audioService.SetPublishedAsync(audioId, publish);
+        TempData[ok ? "Message" : "Error"] = ok
+            ? (publish ? "Đã bật đồng bộ file thuyết minh." : "Đã ẩn file thuyết minh khỏi API sync.")
+            : "Không tìm thấy file thuyết minh.";
+
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostDeleteAudioAsync(int id, int audioId)
+    {
+        var ok = await _audioService.DeleteAsync(audioId);
+        TempData[ok ? "Message" : "Error"] = ok ? "Đã xóa file thuyết minh." : "Không tìm thấy file thuyết minh.";
         return RedirectToPage(new { id });
     }
 }

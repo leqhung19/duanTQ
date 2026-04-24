@@ -6,32 +6,53 @@ namespace VinhKhanh.Admin.Data;
 
 public class AppDbContext : IdentityDbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options) { }
 
-    public DbSet<Poi> Pois { get; set; }
+    public DbSet<Restaurant> Restaurants { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<QRCode> QRCodes { get; set; }
     public DbSet<AudioFile> AudioFiles { get; set; }
-    public DbSet<Translation> Translations { get; set; }
     public DbSet<ListenLog> ListenLogs { get; set; }
+    public DbSet<QrScanLog> QrScanLogs { get; set; }
+    public DbSet<ActiveSession> ActiveSessions { get; set; }
 
-    protected override void OnModelCreating(ModelBuilder builder)
+    protected override void OnModelCreating(ModelBuilder b)
     {
-        base.OnModelCreating(builder);
+        base.OnModelCreating(b);
 
-        // Index để truy vấn nhanh theo vị trí địa lý
-        builder.Entity<Poi>()
-            .HasIndex(p => new { p.Latitude, p.Longitude });
+        b.Entity<Restaurant>()
+         .HasIndex(r => new { r.Latitude, r.Longitude });
 
-        // Index để tìm audio theo POI + ngôn ngữ
-        builder.Entity<AudioFile>()
-            .HasIndex(a => new { a.PoiId, a.Language });
+        b.Entity<Restaurant>()
+         .HasIndex(r => r.QrSlug)
+         .IsUnique()
+         .HasFilter("[QrSlug] IS NOT NULL");
 
-        // Index analytics theo thời gian
-        builder.Entity<ListenLog>()
-            .HasIndex(l => l.ListenedAt);
+        b.Entity<ListenLog>()
+         .HasIndex(l => l.ListenedAt);
 
-        // Unique: mỗi POI chỉ có 1 bản dịch mỗi ngôn ngữ
-        builder.Entity<Translation>()
-            .HasIndex(t => new { t.PoiId, t.Language })
-            .IsUnique();
+        b.Entity<ListenLog>()
+         .HasIndex(l => l.AnonymousSessionId);
+
+        b.Entity<QrScanLog>()
+         .HasIndex(l => l.ScannedAt);
+
+        b.Entity<QrScanLog>()
+         .HasIndex(l => l.RestaurantId);
+
+        b.Entity<QrScanLog>()
+         .HasIndex(l => l.AnonymousSessionId);
+
+        b.Entity<AudioFile>()
+         .HasIndex(a => new { a.RestaurantId, a.Language });
+
+        b.Entity<ActiveSession>()
+         .HasIndex(s => s.ConnectionId).IsUnique();
+
+        // Map đúng tên bảng trong SQL
+        b.Entity<QRCode>().ToTable("QRCodes");
+        b.Entity<AudioFile>().ToTable("AudioFiles");
+        b.Entity<QrScanLog>().ToTable("QrScanLogs");
     }
 }

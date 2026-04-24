@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using VinhKhanh.Admin.Data;
 using VinhKhanh.Admin.Models;
 
@@ -6,99 +7,109 @@ namespace VinhKhanh.Admin.Services;
 
 public class AudioService
 {
+    private static readonly HashSet<string> AllowedExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".mp3", ".wav", ".m4a" };
+
     private readonly AppDbContext _db;
     private readonly IWebHostEnvironment _env;
+    private readonly int _maxSizeBytes;
 
-    public AudioService(AppDbContext db, IWebHostEnvironment env)
+    public AudioService(AppDbContext db, IWebHostEnvironment env, IConfiguration config)
     {
         _db = db;
         _env = env;
+        _maxSizeBytes = config.GetValue<int?>("AppSettings:AudioMaxSizeMb").GetValueOrDefault(20) * 1024 * 1024;
     }
 
-    // Upload file audio mới cho 1 POI
-    public async Task<AudioFile?> UploadAsync(
-        int poiId, string language, IFormFile file)
+    public async Task<List<AudioFile>> GetByRestaurantAsync(int restaurantId) =>
+        await _db.AudioFiles
+            .Where(a => a.RestaurantId == restaurantId)
+            .OrderBy(a => a.Language)
+            .ThenByDescending(a => a.UploadedAt)
+            .ToListAsync();
+
+    public async Task<(AudioFile? Audio, string? Error)> UploadAsync(int restaurantId, string language, IFormFile file)
     {
-        // Validate
-        if (file.Length == 0 || file.Length > 20 * 1024 * 1024) // giới hạn 20MB
-            return null;
+        var normalizedLanguage = NormalizeLanguage(language);
+        if (normalizedLanguage is null)
+            return (null, "Ngon ngu audio khong hop le.");
 
-        var allowed = new[] { ".mp3", ".wav", ".m4a" };
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowed.Contains(ext)) return null;
+        if (file.Length <= 0)
+            return (null, "File audio rong.");
 
-        // Tạo thư mục lưu file
-        var audioDir = Path.Combine(_env.WebRootPath, "audio", poiId.ToString());
-        Directory.CreateDirectory(audioDir);
+        if (file.Length > _maxSizeBytes)
+            return (null, $"File audio vuot qua gioi han {_maxSizeBytes / 1024 / 1024}MB.");
 
-        // Tên file: poi_{id}_{lang}_{timestamp}.mp3
-        var fileName = $"poi_{poiId}_{language}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}{ext}";
-        var filePath = Path.Combine(audioDir, fileName);
-        var urlPath = $"/audio/{poiId}/{fileName}";
+        var extension = Path.GetExtension(file.FileName);
+        if (!AllowedExtensions.Contains(extension))
+            return (null, "Chi ho tro file .mp3, .wav, .m4a.");
 
-        // Lưu file vật lý
-        using var stream = new FileStream(filePath, FileMode.Create);
-        await file.CopyToAsync(stream);
+        var exists = await _db.Restaurants.AnyAsync(r => r.Id == restaurantId);
+        if (!exists)
+            return (null, "Khong tim thay POI.");
 
-        // Xóa file cũ cùng ngôn ngữ (nếu có) — thay thế, không giữ lại
-        var oldAudio = await _db.AudioFiles
-            .FirstOrDefaultAsync(a => a.PoiId == poiId && a.Language == language);
+        var folder = Path.Combine(_env.WebRootPath, "audio", restaurantId.ToString());
+        Directory.CreateDirectory(folder);
 
-        if (oldAudio is not null)
+        var fileName = $"{normalizedLanguage}_{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var physicalPath = Path.Combine(folder, fileName);
+        await using (var stream = new FileStream(physicalPath, FileMode.CreateNew))
         {
-            var oldPath = Path.Combine(_env.WebRootPath, oldAudio.FilePath.TrimStart('/'));
-            if (File.Exists(oldPath)) File.Delete(oldPath);
-            _db.AudioFiles.Remove(oldAudio);
+            await file.CopyToAsync(stream);
         }
 
-        // Lưu vào database
-        var audioFile = new AudioFile
+        var audio = new AudioFile
         {
-            PoiId = poiId,
-            Language = language,
-            FilePath = urlPath,
-            FileName = file.FileName,
+            RestaurantId = restaurantId,
+            Language = normalizedLanguage,
+            FileName = fileName,
+            FilePath = $"/audio/{restaurantId}/{fileName}",
             FileSizeBytes = file.Length,
-            IsPublished = false, // chưa publish ngay — cần admin xét duyệt
-            UploadedAt = DateTime.UtcNow,
+            IsPublished = true,
+            UploadedAt = DateTime.UtcNow
         };
 
-        _db.AudioFiles.Add(audioFile);
+        _db.AudioFiles.Add(audio);
         await _db.SaveChangesAsync();
-        return audioFile;
+        return (audio, null);
     }
 
-    // Publish / Unpublish audio (Admin duyệt)
-    public async Task<bool> SetPublishedAsync(int audioId, bool isPublished)
+    public async Task<bool> SetPublishedAsync(int audioId, bool publish)
     {
         var audio = await _db.AudioFiles.FindAsync(audioId);
         if (audio is null) return false;
 
-        audio.IsPublished = isPublished;
+        audio.IsPublished = publish;
         await _db.SaveChangesAsync();
         return true;
     }
 
-    // Xóa audio
     public async Task<bool> DeleteAsync(int audioId)
     {
         var audio = await _db.AudioFiles.FindAsync(audioId);
         if (audio is null) return false;
 
-        var filePath = Path.Combine(_env.WebRootPath, audio.FilePath.TrimStart('/'));
-        if (File.Exists(filePath)) File.Delete(filePath);
-
+        var physicalPath = Path.Combine(_env.WebRootPath, audio.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
         _db.AudioFiles.Remove(audio);
         await _db.SaveChangesAsync();
+
+        if (File.Exists(physicalPath))
+            File.Delete(physicalPath);
+
         return true;
     }
 
-    // Lấy danh sách audio của 1 POI
-    public async Task<List<AudioFile>> GetByPoiAsync(int poiId)
+    public static string? NormalizeLanguage(string? language)
     {
-        return await _db.AudioFiles
-            .Where(a => a.PoiId == poiId)
-            .OrderBy(a => a.Language)
-            .ToListAsync();
+        if (string.IsNullOrWhiteSpace(language)) return null;
+
+        return language.Trim().ToLowerInvariant() switch
+        {
+            "vi" or "vn" => "vi",
+            "en" => "en",
+            "ko" or "kr" => "ko",
+            "cn" or "zh" or "zh-cn" => "cn",
+            _ => null
+        };
     }
 }

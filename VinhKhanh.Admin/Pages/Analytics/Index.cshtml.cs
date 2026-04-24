@@ -28,8 +28,12 @@ public class IndexModel : PageModel
         GpsTriggerCount = await _db.ListenLogs.CountAsync(l => l.TriggerType == "gps");
         QrTriggerCount = await _db.ListenLogs.CountAsync(l => l.TriggerType == "qr");
 
+        // Lấy tên POI trước
+        var poiNames = await _db.Restaurants
+            .ToDictionaryAsync(p => p.Id, p => p.Name);
+
         var grouped = await _db.ListenLogs
-            .GroupBy(l => l.PoiId)
+            .GroupBy(l => l.RestaurantId)
             .Select(g => new {
                 PoiId = g.Key,
                 Count = g.Count(),
@@ -45,7 +49,7 @@ public class IndexModel : PageModel
         var max = grouped.FirstOrDefault()?.Count ?? 1;
 
         TopPois = grouped.Select(g => new PoiStat(
-            _db.Pois.Where(p => p.Id == g.PoiId).Select(p => p.Name).FirstOrDefault() ?? "?",
+            poiNames.GetValueOrDefault(g.PoiId, "Không rõ"),
             g.Count,
             (int)(g.Count * 100.0 / max),
             g.TopLang ?? "vi"

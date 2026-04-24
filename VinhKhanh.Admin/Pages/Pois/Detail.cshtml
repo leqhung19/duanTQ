@@ -1,11 +1,17 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model VinhKhanh.Admin.Pages.Pois.DetailModel
 @{
-    ViewData["Title"] = $"Audio — {Model.Poi?.Name}";
+    ViewData["Title"] = $"File thuyết minh thu âm - {Model.Poi?.Name}";
+    ViewData["ActivePage"] = "Pois";
 }
 
-<h2>Quản lý Audio — <em>@Model.Poi?.Name</em></h2>
-<a asp-page="Index" class="btn btn-sm btn-outline-secondary mb-3">← Quay lại danh sách</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">File thuyết minh thu âm</h2>
+        <div class="text-muted">@Model.Poi?.Name</div>
+    </div>
+    <a asp-page="Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+</div>
 
 @if (TempData["Message"] is string msg)
 {
@@ -16,26 +22,26 @@
     <div class="alert alert-danger">@err</div>
 }
 
-<!-- Form upload -->
-<div class="card mb-4">
-    <div class="card-header"><strong>Upload file audio mới</strong></div>
+<div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
-        <form method="post" enctype="multipart/form-data" asp-page-handler="Upload">
-            <input type="hidden" name="poiId" value="@Model.Poi?.Id" />
+        <h5 class="mb-3">Upload file thuyết minh theo ngôn ngữ</h5>
+        <p class="text-muted small mb-3">
+            App sẽ ưu tiên phát file này khi khách quét QR hoặc đến gần POI. Nếu chưa có file, app dùng lời thuyết minh tự động.
+        </p>
+        <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" asp-route-id="@Model.Poi?.Id">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">Ngôn ngữ</label>
-                    <select name="language" class="form-select">
-                        <option value="vi">🇻🇳 Tiếng Việt</option>
-                        <option value="en">🇬🇧 English</option>
-                        <option value="zh">🇨🇳 中文</option>
-                        <option value="ko">🇰🇷 한국어</option>
+                    <select name="language" class="form-select" required>
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="en">English</option>
+                        <option value="ko">Tiếng Hàn</option>
+                        <option value="cn">Tiếng Trung</option>
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">File audio (.mp3 / .wav — tối đa 20MB)</label>
-                    <input type="file" name="file" class="form-control"
-                           accept=".mp3,.wav,.m4a" required />
+                    <label class="form-label">File thuyết minh (.mp3, .wav, .m4a)</label>
+                    <input type="file" name="file" class="form-control" accept=".mp3,.wav,.m4a,audio/*" required />
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100">Upload</button>
@@ -45,76 +51,83 @@
     </div>
 </div>
 
-<!-- Danh sách audio hiện có -->
-<div class="card">
-    <div class="card-header"><strong>Danh sách audio đã upload</strong></div>
-    <div class="card-body p-0">
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <h5 class="mb-3">File thuyết minh đã upload</h5>
         @if (!Model.AudioFiles.Any())
         {
-            <p class="p-3 text-muted">Chưa có file audio nào.</p>
+            <div class="text-muted">Chưa có file thuyết minh thu âm nào.</div>
         }
         else
         {
-            <table class="table mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Ngôn ngữ</th>
-                        <th>Tên file</th>
-                        <th>Kích thước</th>
-                        <th>Preview</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var audio in Model.AudioFiles)
-                    {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
                         <tr>
-                            <td>
-                                @(audio.Language switch
-                                {
-                                    "vi" => "🇻🇳 Tiếng Việt",
-                                    "en" => "🇬🇧 English",
-                                    "zh" => "🇨🇳 中文",
-                                    "ko" => "🇰🇷 한국어",
-                                    _ => audio.Language
-                                })
-                            </td>
-                            <td><small>@audio.FileName</small></td>
-                            <td><small>@((audio.FileSizeBytes / 1024.0).ToString("F1")) KB</small></td>
-                            <td>
-                                <audio controls style="height:32px; width:200px;">
-                                    <source src="@audio.FilePath" />
-                                </audio>
-                            </td>
-                            <td>
-                                @if (audio.IsPublished)
-                                {
-                                    <span class="badge bg-success">Đã duyệt</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                                }
-                            </td>
-                            <td class="d-flex gap-1">
-                                <form method="post" asp-page-handler="Publish"
-                                      asp-route-audioId="@audio.Id"
-                                      asp-route-publish="@(!audio.IsPublished)">
-                                    <button class="btn btn-sm @(audio.IsPublished ? "btn-outline-warning" : "btn-outline-success")">
-                                        @(audio.IsPublished ? "Huỷ duyệt" : "Duyệt")
-                                    </button>
-                                </form>
-                                <form method="post" asp-page-handler="DeleteAudio"
-                                      asp-route-audioId="@audio.Id"
-                                      onsubmit="return confirm('Xóa file audio này?')">
-                                    <button class="btn btn-sm btn-outline-danger">Xóa</button>
-                                </form>
-                            </td>
+                            <th>Ngôn ngữ</th>
+                            <th>File</th>
+                            <th>Preview</th>
+                            <th>Dung lượng</th>
+                            <th>Trạng thái</th>
+                            <th style="width:210px;">Thao tác</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var audio in Model.AudioFiles)
+                        {
+                            <tr>
+                                <td>@LanguageName(audio.Language)</td>
+                                <td><small>@audio.FileName</small></td>
+                                <td>
+                                    <audio controls style="width:220px;height:32px;">
+                                        <source src="@audio.FilePath" />
+                                    </audio>
+                                </td>
+                                <td>@((audio.FileSizeBytes / 1024.0).ToString("F1")) KB</td>
+                                <td>
+                                    @if (audio.IsPublished)
+                                    {
+                                        <span class="badge bg-success">Dang sync</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Da an</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <form method="post" asp-page-handler="Publish"
+                                              asp-route-id="@Model.Poi?.Id"
+                                              asp-route-audioId="@audio.Id"
+                                              asp-route-publish="@(!audio.IsPublished)">
+                                            <button class="btn btn-sm @(audio.IsPublished ? "btn-outline-warning" : "btn-outline-success")">
+                                                @(audio.IsPublished ? "An" : "Publish")
+                                            </button>
+                                        </form>
+                                        <form method="post" asp-page-handler="DeleteAudio"
+                                              asp-route-id="@Model.Poi?.Id"
+                                              asp-route-audioId="@audio.Id"
+                                              onsubmit="return confirm('Xóa file thuyết minh này?')">
+                                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
         }
     </div>
 </div>
+
+@functions {
+    private static string LanguageName(string language) => language switch
+    {
+        "vi" => "Tiếng Việt",
+        "en" => "English",
+        "ko" => "Tiếng Hàn",
+        "cn" => "Tiếng Trung",
+        _ => language
+    };
+}

@@ -9,29 +9,25 @@
 
 	<ItemGroup>
 		<!-- Entity Framework Core + SQL Server -->
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer"
-						  Version="9.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools"
-						  Version="9.0.0">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
 		</PackageReference>
 
 		<!-- ASP.NET Identity (login, phân quyền) -->
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore"
-						  Version="9.0.0" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity.UI"
-						  Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.0" />
 
 		<!-- Razor Pages scaffolding (cần cho Identity UI) -->
-		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design"
-						  Version="9.0.0">
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="9.0.0">
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
 	</ItemGroup>
 
 	<!-- Cho phép wwwroot/audio/ tự tạo khi build -->
 	<ItemGroup>
+		<Folder Include="Areas\Identity\Data\" />
 		<Folder Include="wwwroot\audio\" />
 	</ItemGroup>
 

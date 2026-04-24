@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Security.Claims;
 using VinhKhanh.Admin.Models;
 using VinhKhanh.Admin.Services;
 
@@ -10,24 +9,18 @@ namespace VinhKhanh.Admin.Pages.Pois;
 [Authorize]
 public class IndexModel : PageModel
 {
-    private readonly PoiService _poiService;
-    public List<Poi> Pois { get; set; } = [];
+    private readonly RestaurantService _svc;
+    public List<Restaurant> Restaurants { get; set; } = [];
 
-    public IndexModel(PoiService poiService) => _poiService = poiService;
+    public IndexModel(RestaurantService svc) => _svc = svc;
 
-    public async Task OnGetAsync()
-    {
-        // Admin thấy tất cả, Owner chỉ thấy của mình
-        var ownerId = User.IsInRole("Admin")
-            ? null
-            : User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        Pois = await _poiService.GetAllAsync(ownerId);
-    }
+    public async Task OnGetAsync() =>
+        Restaurants = await _svc.GetAllAsync();
 
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
-        await _poiService.DeleteAsync(id);
+        await _svc.DeleteAsync(id);
+        TempData["Message"] = "Đã xóa điểm.";
         return RedirectToPage();
     }
 }
