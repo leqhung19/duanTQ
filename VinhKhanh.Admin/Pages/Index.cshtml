@@ -48,6 +48,22 @@
             </div>
         </div>
     </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">QR quét hôm nay</div>
+                <div class="fs-3 fw-bold text-danger">@Model.TodayQrScans</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tổng lượt quét QR</div>
+                <div class="fs-3 fw-bold text-dark">@Model.TotalQrScans</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -85,20 +101,27 @@
         </div>
     </div>
 
-    <!-- Ngôn ngữ đang dùng -->
+    <!-- Ngôn ngữ đang hỗ trợ -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-600">🌐 Ngôn ngữ</div>
+            <div class="card-header bg-white fw-600">🌐 Ngôn ngữ đang hỗ trợ</div>
             <div class="card-body">
-                @foreach (var lang in Model.LanguageStats)
+                @foreach (var lang in Model.SupportedLanguages)
                 {
+                    var color = lang.Code switch
+                    {
+                        "vi" => "#1565c0",
+                        "en" => "#2e7d32",
+                        "ko" => "#6a1b9a",
+                        "cn" => "#c62828",
+                        _ => "#6c757d"
+                    };
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="badge"
-                              style="background:@(lang.Lang=="vi"?"#1565c0":lang.Lang=="en"?"#2e7d32":"#e65100");
-                                     color:white;font-size:.8rem;padding:.3rem .7rem;">
-                            @lang.Lang.ToUpper()
+                              style="background:@color;color:white;font-size:.8rem;padding:.3rem .7rem;">
+                            @lang.Code.ToUpper()
                         </span>
-                        <strong>@lang.Count</strong>
+                        <strong class="small">@lang.Name</strong>
                     </div>
                 }
             </div>
@@ -108,7 +131,7 @@
     <!-- Lượt nghe gần nhất -->
     <div class="col-md-3">
         <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white fw-600">🕐 Gần nhất</div>
+            <div class="card-header bg-white fw-600">🕐 Lượt nghe gần nhất </div>
             <div class="card-body p-0">
                 @foreach (var log in Model.RecentLogs)
                 {
@@ -121,12 +144,61 @@
                                 @log.Language.ToUpper()
                             </span>
                             <small class="text-muted">
-                                @log.ListenedAt.ToString("HH:mm")
+                                @IndexModel.ToVietnamTime(log.ListenedAt).ToString("HH:mm")
                             </small>
                         </div>
                     </div>
                 }
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-white fw-600">Lịch sử quét QR gần nhất</div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>POI</th>
+                        <th>Mã QR</th>
+                        <th>Thiết bị</th>
+                        <th>Khách ẩn danh</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (!Model.RecentQrScans.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-muted text-center py-3">
+                            Chưa có lượt quét QR nào.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var scan in Model.RecentQrScans)
+                    {
+                        var vnTime = IndexModel.ToVietnamTime(scan.ScannedAt);
+                        <tr>
+                            <td class="text-nowrap">@vnTime.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><strong>@(scan.Restaurant?.Name ?? "?")</strong></td>
+                            <td><code>@scan.QrCode</code></td>
+                            <td>
+                                <span class="badge bg-secondary">@scan.DevicePlatform.ToUpper()</span>
+                            </td>
+                            <td class="text-muted small">
+                                @(string.IsNullOrWhiteSpace(scan.AnonymousSessionId)
+                                    ? "-"
+                                    : scan.AnonymousSessionId[..Math.Min(8, scan.AnonymousSessionId.Length)])
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -138,4 +210,42 @@
     50%{opacity:.4;transform:scale(1.4);}
 }
 </style>
+<script>
+(() => {
+    const activeCount = document.getElementById("activeCount");
+    const liveDot = document.getElementById("liveDot");
+
+    if (!activeCount || !liveDot) return;
+
+    const applyCount = (count) => {
+        activeCount.textContent = count;
+        liveDot.classList.toggle("d-none", count <= 0);
+    };
+
+    const refreshActiveUsers = async () => {
+        try {
+            const response = await fetch("/api/sync/session/active-users", {
+                cache: "no-store"
+            });
+            if (!response.ok) return;
+
+            const data = await response.json();
+            applyCount(Number(data.activeUsers || 0));
+        } catch {
+            // Giữ nguyên số cũ nếu API lỗi.
+        }
+    };
+
+    refreshActiveUsers();
+    setInterval(refreshActiveUsers, 2000);
+
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            refreshActiveUsers();
+        }
+    });
+
+    window.addEventListener("focus", refreshActiveUsers);
+})();
+</script>
 }

@@ -1,0 +1,262 @@
+﻿@page
+@model VinhKhanh.Admin.Pages.Map.IndexModel
+@{
+    ViewData["Title"] = "Bản đồ POI";
+    ViewData["ActivePage"] = "Map";
+}
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<style>
+    .map-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .map-stat-card,
+    .map-panel {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    .map-stat-card {
+        padding: 1rem;
+        border-top: 3px solid #00c896;
+    }
+
+    .map-stat-card .label {
+        color: #6c757d;
+        font-size: .85rem;
+    }
+
+    .map-stat-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.1;
+    }
+
+    .map-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, .7fr);
+        gap: 1.25rem;
+        align-items: start;
+    }
+
+    .map-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        padding: .85rem 1rem;
+        border-bottom: 1px solid #edf0f3;
+    }
+
+    .map-toolbar label {
+        display: flex;
+        align-items: center;
+        gap: .45rem;
+        margin: 0;
+        font-size: .92rem;
+        color: #344054;
+    }
+
+    #poiMap {
+        height: 560px;
+        min-height: 420px;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .top-list {
+        padding: 1rem;
+    }
+
+    .top-poi {
+        padding: .8rem 0;
+        border-bottom: 1px solid #edf0f3;
+    }
+
+    .top-poi:last-child {
+        border-bottom: 0;
+    }
+
+    .top-poi .name {
+        font-weight: 700;
+        color: #1f2937;
+    }
+
+    .top-poi .meta {
+        color: #667085;
+        font-size: .86rem;
+    }
+
+    .listen-pill {
+        display: inline-block;
+        margin-top: .35rem;
+        margin-right: .35rem;
+        padding: .18rem .5rem;
+        border-radius: 8px;
+        background: #eef8f5;
+        color: #087f5b;
+        font-size: .8rem;
+    }
+
+    @@media (max-width: 992px) {
+        .map-stats,
+        .map-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="mb-1">Bản đồ POI</h2>
+        <div class="text-muted">Heatmap thể hiện mức độ quan tâm của du khách tại từng POI từ lượt nghe và lượt quét QR.</div>
+    </div>
+</div>
+
+<div class="map-stats">
+    <div class="map-stat-card">
+        <div class="label">POI hoạt động</div>
+        <div class="value">@Model.ActivePois</div>
+    </div>
+    <div class="map-stat-card">
+        <div class="label">Tổng quan tâm</div>
+        <div class="value">@Model.TotalInteractions</div>
+    </div>
+    <div class="map-stat-card">
+        <div class="label">Du khách QR ẩn danh</div>
+        <div class="value">@Model.AnonymousQrVisitors</div>
+    </div>
+    <div class="map-stat-card">
+        <div class="label">Điểm nóng</div>
+        <div class="value">@Model.HotPoiCount</div>
+    </div>
+</div>
+
+<div class="map-layout">
+    <section class="map-panel">
+        <div class="map-toolbar">
+            <label><input id="togglePois" type="checkbox" checked /> POI hoạt động</label>
+            <label><input id="toggleHeat" type="checkbox" checked /> Heatmap mức độ quan tâm</label>
+            <label><input id="toggleRadius" type="checkbox" /> Bán kính GPS</label>
+        </div>
+        <div id="poiMap"></div>
+    </section>
+
+    <aside class="map-panel top-list">
+        <h5 class="mb-3">Điểm được quan tâm nhiều</h5>
+        @if (Model.TopPois.Count == 0)
+        {
+            <div class="text-muted">Chưa có lượt nghe hoặc lượt quét QR nào được ghi nhận.</div>
+        }
+        else
+        {
+            foreach (var poi in Model.TopPois)
+            {
+                <div class="top-poi">
+                    <div class="name">@poi.Name</div>
+                    <div class="meta">@poi.Address</div>
+                    <span class="listen-pill">@poi.InterestScore tương tác</span>
+                    <span class="listen-pill">@poi.TotalListens lượt nghe</span>
+                    <span class="listen-pill">Quét QR @poi.QrScans</span>
+                    <span class="listen-pill">Khách QR @poi.AnonymousQrVisitors</span>
+                    <span class="listen-pill">Nghe QR @poi.QrListens</span>
+                    <span class="listen-pill">GPS @poi.GpsListens</span>
+                </div>
+            }
+        }
+    </aside>
+</div>
+
+@section Scripts {
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script>
+        const pois = @Html.Raw(Model.PoiJson);
+        const heatPoints = @Html.Raw(Model.HeatJson);
+        const map = L.map('poiMap').setView([@Model.CenterLat, @Model.CenterLng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        const poiLayer = L.layerGroup();
+        const radiusLayer = L.layerGroup();
+
+        pois.forEach(poi => {
+            const marker = L.marker([poi.latitude, poi.longitude]).bindPopup(`
+                <strong>${escapeHtml(poi.name)}</strong><br>
+                ${escapeHtml(poi.address || '')}<br>
+                Mức quan tâm: ${poi.interestScore}<br>
+                Lượt nghe: ${poi.totalListens}<br>
+                Quét QR: ${poi.qrScans}<br>
+                Khách QR ẩn danh: ${poi.anonymousQrVisitors}<br>
+                Nghe từ QR: ${poi.qrListens} | GPS: ${poi.gpsListens}<br>
+                <a href="/Pois/Edit?id=${poi.id}">Sửa POI</a>
+            `);
+
+            marker.addTo(poiLayer);
+
+            L.circle([poi.latitude, poi.longitude], {
+                radius: poi.radiusMeters || 30,
+                color: '#00a884',
+                weight: 1,
+                fillColor: '#00c896',
+                fillOpacity: .08
+            }).addTo(radiusLayer);
+        });
+
+        const heatLayer = L.heatLayer(heatPoints, {
+            radius: 28,
+            blur: 22,
+            maxZoom: 18,
+            gradient: {
+                .2: '#2b8a3e',
+                .5: '#ffd43b',
+                .8: '#f76707',
+                1: '#d00000'
+            }
+        });
+
+        poiLayer.addTo(map);
+        heatLayer.addTo(map);
+
+        document.getElementById('togglePois').addEventListener('change', event => {
+            toggleLayer(poiLayer, event.target.checked);
+        });
+
+        document.getElementById('toggleHeat').addEventListener('change', event => {
+            toggleLayer(heatLayer, event.target.checked);
+        });
+
+        document.getElementById('toggleRadius').addEventListener('change', event => {
+            toggleLayer(radiusLayer, event.target.checked);
+        });
+
+        if (pois.length > 0) {
+            map.fitBounds(pois.map(p => [p.latitude, p.longitude]), { padding: [28, 28], maxZoom: 17 });
+        }
+
+        function toggleLayer(layer, enabled) {
+            if (enabled) {
+                layer.addTo(map);
+            } else {
+                map.removeLayer(layer);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+    </script>
+}

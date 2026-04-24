@@ -54,11 +54,13 @@ public class RestaurantService
         _db.Restaurants.Add(r);
         await _db.SaveChangesAsync();
 
+        r.QrSlug = await QrSlugService.EnsureUniqueAsync(_db, r.QrSlug, r.Id, r.Name);
+
         // Tự tạo QR code
         _db.QRCodes.Add(new QRCode
         {
             RestaurantId = r.Id,
-            QRContent = $"VK:{r.Id}"
+            QRContent = r.QrSlug
         });
         await _db.SaveChangesAsync();
         return r;
@@ -85,6 +87,8 @@ public class RestaurantService
             t => r.AudioContent_cn = t);
 
         existing.Name = r.Name;
+        if (string.IsNullOrWhiteSpace(existing.QrSlug))
+            existing.QrSlug = await QrSlugService.EnsureUniqueAsync(_db, r.QrSlug, existing.Id, r.Name);
         existing.CategoryId = r.CategoryId;
         existing.Image = r.Image;
         existing.Description_vi = r.Description_vi;

@@ -7,11 +7,11 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h2 class="mb-1">Quan ly tai khoan admin</h2>
-        <div class="text-muted">Chi tai khoan co quyen Admin moi dang nhap va quan tri duoc website.</div>
+        <h2 class="mb-1">Quản lý tài khoản ADMIN</h2>
+        <div class="text-muted">Chỉ tài khoản có quyền Admin mới đăng nhập và quản trị được website.</div>
     </div>
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-        + Them admin
+        + Thêm admin
     </button>
 </div>
 
@@ -29,7 +29,7 @@
         <tr>
             <th>Email</th>
             <th>Quyen</th>
-            <th style="width:140px;">Thao tac</th>
+            <th style="width:140px;">Thao tác</th>
         </tr>
     </thead>
     <tbody>
@@ -43,13 +43,13 @@
                     {
                         <form method="post" asp-page-handler="Delete"
                               asp-route-userId="@user.Id"
-                              onsubmit="return confirm('Xoa tai khoan @user.Email?')">
-                            <button class="btn btn-sm btn-outline-danger">Xoa</button>
+                              onsubmit="return confirm('Xóa tài khoản @user.Email?')">
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
                         </form>
                     }
                     else
                     {
-                        <span class="text-muted small">Mac dinh</span>
+                        <span class="text-muted small">Mặc định</span>
                     }
                 </td>
             </tr>
@@ -61,7 +61,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Them tai khoan admin</h5>
+                <h5 class="modal-title">Thêm tài khoản admin</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form method="post" asp-page-handler="Create">
@@ -72,16 +72,16 @@
                                placeholder="admin@example.com" />
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Mat khau</label>
+                        <label class="form-label">Mật khẩu</label>
                         <input type="password" name="password" class="form-control" required
-                               placeholder="Toi thieu 8 ky tu, co chu hoa va so" />
+                               placeholder="Tối thiểu 8 ký tự, có chữ hoa và số" />
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        Huy
+                        Hủy
                     </button>
-                    <button type="submit" class="btn btn-primary">Tao admin</button>
+                    <button type="submit" class="btn btn-primary">Tạo admin</button>
                 </div>
             </form>
         </div>

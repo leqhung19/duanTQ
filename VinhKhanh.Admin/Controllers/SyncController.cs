@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using VinhKhanh.Admin.Data;
 using VinhKhanh.Admin.Models;
+using VinhKhanh.Admin.Services;
 
 namespace VinhKhanh.Admin.Controllers;
 
@@ -10,8 +11,13 @@ namespace VinhKhanh.Admin.Controllers;
 public class SyncController : ControllerBase
 {
     private readonly AppDbContext _db;
+    private readonly ActiveSessionService _activeSessions;
 
-    public SyncController(AppDbContext db) => _db = db;
+    public SyncController(AppDbContext db, ActiveSessionService activeSessions)
+    {
+        _db = db;
+        _activeSessions = activeSessions;
+    }
 
     // Mobile goi de lay toan bo POI dang hoat dong.
     [HttpGet("pois")]
@@ -84,6 +90,7 @@ public class SyncController : ControllerBase
             Language = Normalize(req.Language, "vi"),
             AudioSource = Normalize(req.AudioSource, "tts"),
             TriggerType = Normalize(req.TriggerType, "gps"),
+            AnonymousSessionId = NormalizeSessionId(req.SessionId),
             ListenedAt = DateTime.UtcNow,
         });
         await _db.SaveChangesAsync();
@@ -98,7 +105,7 @@ public class SyncController : ControllerBase
             return BadRequest(new { message = "sessionId khong hop le." });
 
         var sessionId = req.SessionId.Trim();
-        var now = DateTime.Now;
+        var now = PresenceClock.Now();
         var session = await _db.ActiveSessions
             .FirstOrDefaultAsync(s => s.ConnectionId == sessionId);
 
@@ -121,8 +128,14 @@ public class SyncController : ControllerBase
         }
 
         await _db.SaveChangesAsync();
-        var activeDeadline = now.AddMinutes(-3);
-        var activeUsers = await _db.ActiveSessions.CountAsync(s => s.LastPing >= activeDeadline);
+        var activeUsers = await _activeSessions.CountActiveUsersAsync();
+        return Ok(new { activeUsers });
+    }
+
+    [HttpGet("session/active-users")]
+    public async Task<IActionResult> GetActiveUsers()
+    {
+        var activeUsers = await _activeSessions.CountActiveUsersAsync();
         return Ok(new { activeUsers });
     }
 
@@ -167,6 +180,14 @@ public class SyncController : ControllerBase
 
     private static string Normalize(string? value, string fallback) =>
         string.IsNullOrWhiteSpace(value) ? fallback : value.Trim().ToLowerInvariant();
+
+    private static string? NormalizeSessionId(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+
+        var sessionId = value.Trim();
+        return sessionId.Length <= 64 ? sessionId : sessionId[..64];
+    }
 
     private string? ToImageUrl(string? image)
     {
@@ -232,7 +253,8 @@ public record LogRequest(
     int RestaurantId,
     string? Language,
     string? AudioSource,
-    string? TriggerType);
+    string? TriggerType,
+    string? SessionId);
 
 public record SessionPingRequest(
     string SessionId,

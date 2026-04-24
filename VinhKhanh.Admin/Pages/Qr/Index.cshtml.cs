@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using VinhKhanh.Admin.Data;
 using VinhKhanh.Admin.Models;
+using VinhKhanh.Admin.Services;
 
 namespace VinhKhanh.Admin.Pages.Qr;
 
@@ -35,6 +36,41 @@ public class IndexModel : PageModel
     }
 
     public async Task OnGetAsync() => await LoadAsync();
+
+    public async Task<IActionResult> OnPostRefreshAsync()
+    {
+        var pois = await _db.Restaurants
+            .Include(r => r.QRCodes)
+            .OrderBy(r => r.Id)
+            .ToListAsync();
+
+        foreach (var poi in pois)
+        {
+            var qr = poi.QRCodes
+                .OrderBy(q => q.Id)
+                .FirstOrDefault();
+
+            if (qr is null)
+            {
+                qr = new QRCode
+                {
+                    RestaurantId = poi.Id,
+                    CreatedAt = DateTime.Now
+                };
+                _db.QRCodes.Add(qr);
+            }
+
+            if (string.IsNullOrWhiteSpace(poi.QrSlug))
+                poi.QrSlug = await QrSlugService.EnsureUniqueAsync(_db, poi.QrSlug, poi.Id, poi.Name);
+
+            qr.QRContent = BuildQrUrl(poi);
+            qr.IsActive = poi.IsActive;
+        }
+
+        await _db.SaveChangesAsync();
+        TempData["Message"] = "Đã cập nhật URL QR theo domain hiện tại.";
+        return RedirectToPage();
+    }
 
     public async Task<IActionResult> OnPostUploadAsync(int restaurantId, IFormFile? qrImage)
     {
@@ -87,7 +123,10 @@ public class IndexModel : PageModel
             _db.QRCodes.Add(qr);
         }
 
-        qr.QRContent = BuildQrUrl(poi.Id);
+        if (string.IsNullOrWhiteSpace(poi.QrSlug))
+            poi.QrSlug = await QrSlugService.EnsureUniqueAsync(_db, poi.QrSlug, poi.Id, poi.Name);
+
+        qr.QRContent = BuildQrUrl(poi);
         qr.ImagePath = $"/qr/{poi.Id}/{fileName}";
         qr.IsActive = true;
 
@@ -122,7 +161,8 @@ public class IndexModel : PageModel
                 r.IsActive,
                 qr?.Id,
                 qr?.ImagePath,
-                qr?.QRContent ?? BuildQrUrl(r.Id));
+                BuildQrUrl(r),
+                BuildQrImageUrl(BuildQrUrl(r)));
         }).ToList();
 
         TotalPoi = Items.Count;
@@ -130,15 +170,30 @@ public class IndexModel : PageModel
         PoiWithoutQrImage = TotalPoi - PoiWithQrImage;
     }
 
-    private string BuildQrUrl(int poiId)
+    private string BuildQrUrl(Restaurant poi)
     {
+        var code = string.IsNullOrWhiteSpace(poi.QrSlug)
+            ? poi.Id.ToString()
+            : poi.QrSlug;
+
         var configured = _configuration["AppSettings:PublicBaseUrl"];
         if (!string.IsNullOrWhiteSpace(configured))
-            return $"{configured.Trim().TrimEnd('/')}/q/{poiId}";
+            return $"{configured.Trim().TrimEnd('/')}/q/{code}";
 
         var request = HttpContext.Request;
-        return $"{request.Scheme}://{request.Host}/q/{poiId}";
+        var scheme = request.Headers.TryGetValue("X-Forwarded-Proto", out var forwardedProto)
+            ? forwardedProto.ToString().Split(',')[0].Trim()
+            : request.Scheme;
+        var host = request.Headers.TryGetValue("X-Forwarded-Host", out var forwardedHost)
+            ? forwardedHost.ToString().Split(',')[0].Trim()
+            : request.Host.ToString();
+
+        return $"{scheme}://{host}/q/{code}";
     }
+
+    private static string BuildQrImageUrl(string qrContent) =>
+        "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data="
+        + Uri.EscapeDataString(qrContent);
 
     private void DeleteOldQrImage(string? oldPath, string? newPath)
     {
@@ -167,7 +222,8 @@ public class IndexModel : PageModel
         bool PoiIsActive,
         int? QrId,
         string? QrImagePath,
-        string QrContent)
+        string QrContent,
+        string QrImageUrl)
     {
         public bool HasQrImage => !string.IsNullOrWhiteSpace(QrImagePath);
     }

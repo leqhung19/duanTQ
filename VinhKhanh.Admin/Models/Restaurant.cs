@@ -13,6 +13,7 @@ public class Restaurant
     [MaxLength(200)]
     public string Name { get; set; } = string.Empty;
     public string? Image { get; set; }
+    public string? QrSlug { get; set; }
 
     // Mô tả ngắn
     public string? Description_vi { get; set; }
@@ -45,6 +46,7 @@ public class Restaurant
     // Navigation
     public Category? Category { get; set; }
     public ICollection<ListenLog> ListenLogs { get; set; } = [];
+    public ICollection<QrScanLog> QrScanLogs { get; set; } = [];
     public ICollection<QRCode> QRCodes { get; set; } = [];
     public ICollection<AudioFile> AudioFiles { get; set; } = [];
 }
@@ -90,7 +92,19 @@ public class ListenLog
     public string Language { get; set; } = "vi";   // vi | en | cn
     public string AudioSource { get; set; } = "tts";  // tts | file
     public string TriggerType { get; set; } = "gps";  // gps | qr
+    public string? AnonymousSessionId { get; set; }
     public DateTime ListenedAt { get; set; } = DateTime.Now;
+    public Restaurant? Restaurant { get; set; }
+}
+
+public class QrScanLog
+{
+    public int Id { get; set; }
+    public int RestaurantId { get; set; }
+    public string QrCode { get; set; } = string.Empty;
+    public string DevicePlatform { get; set; } = "unknown";
+    public string? AnonymousSessionId { get; set; }
+    public DateTime ScannedAt { get; set; } = DateTime.UtcNow;
     public Restaurant? Restaurant { get; set; }
 }
 

@@ -1,5 +1,6 @@
 @page "{id:int}"
 @model VinhKhanh.Admin.Pages.Pois.EditModel
+@inject IConfiguration Configuration
 @{
     ViewData["Title"] = "Sua POI";
     ViewData["ActivePage"] = "Pois";
@@ -14,11 +15,11 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0"> Sửa POIS - <em>@Model.Poi.Name</em></h2>
+    <h2 class="mb-0">Sua POI - <em>@Model.Poi.Name</em></h2>
     <a asp-page="Index" class="btn btn-sm btn-outline-secondary">Quay lại</a>
 </div>
 
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Poi.Id" />
     <input type="hidden" asp-for="Poi.CreatedAt" />
     <input type="hidden" asp-for="Poi.Image" />
@@ -39,7 +40,7 @@
                     <input asp-for="Poi.Address" class="form-control" />
                 </div>
                 <div class="col-md-4">
-                    <label asp-for="Poi.Phone" class="form-label">SĐt</label>
+                    <label asp-for="Poi.Phone" class="form-label">SĐT</label>
                     <input asp-for="Poi.Phone" class="form-control" />
                 </div>
                 <div class="col-md-4">
@@ -49,6 +50,28 @@
                 <div class="col-md-4">
                     <label asp-for="Poi.PriceRange" class="form-label">Khoảng giá</label>
                     <input asp-for="Poi.PriceRange" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Ảnh hiện tại</label>
+                    <div>
+                        @if (!string.IsNullOrWhiteSpace(Model.Poi.Image))
+                        {
+                            <img src="@ResolveImageUrl(Model.Poi.Image, Configuration)"
+                                 alt="@Model.Poi.Name"
+                                 style="width:160px;height:110px;object-fit:cover;border-radius:8px;border:1px solid #ddd;"
+                                 onerror="this.style.display='none'; this.nextElementSibling.classList.remove('d-none');" />
+                            <div class="text-muted small d-none mt-2">Khong tai duoc anh hien tai.</div>
+                        }
+                        else
+                        {
+                            <div class="text-muted small">Chưa có ảnh cho POI này.</div>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Đổi ảnh</label>
+                    <input type="file" name="ImageFile" class="form-control" accept="image/*" />
+                    <small class="text-muted">Bỏ trống nếu muốn giữ nguyên ảnh cũ.</small>
                 </div>
             </div>
         </div>
@@ -174,4 +197,22 @@
             marker.setLatLng(e.latlng);
         });
     </script>
+}
+
+@functions {
+    private static string? ResolveImageUrl(string? image, IConfiguration configuration)
+    {
+        if (string.IsNullOrWhiteSpace(image)) return null;
+        if (Uri.TryCreate(image, UriKind.Absolute, out _)) return image;
+
+        var path = image.Replace('\\', '/').TrimStart('/');
+        if (!path.StartsWith("images/", StringComparison.OrdinalIgnoreCase))
+            path = $"images/{path}";
+
+        var publicBaseUrl = configuration["AppSettings:PublicBaseUrl"];
+        if (!string.IsNullOrWhiteSpace(publicBaseUrl))
+            return $"{publicBaseUrl.TrimEnd('/')}/{path}";
+
+        return "/" + path;
+    }
 }

@@ -15,9 +15,10 @@ public static class DatabaseBootstrapper
         }
         else
         {
-            await db.Database.MigrateAsync();
+            await db.Database.EnsureCreatedAsync();
         }
 
+        await EnsureMonitoringCompatibilityAsync(db);
         await ClearPresenceSessionsAsync(db);
         await DbSeeder.SeedRolesAsync(services);
     }
@@ -66,6 +67,92 @@ public static class DatabaseBootstrapper
                 DELETE FROM dbo.ActiveSessions;
             """);
     }
+
+    private static async Task EnsureMonitoringCompatibilityAsync(AppDbContext db)
+    {
+        foreach (var sql in MonitoringCompatibilityScripts)
+        {
+            await db.Database.ExecuteSqlRawAsync(sql);
+        }
+    }
+
+    private static readonly string[] MonitoringCompatibilityScripts =
+    [
+        """
+        IF OBJECT_ID(N'dbo.Restaurants', N'U') IS NOT NULL
+           AND COL_LENGTH('dbo.Restaurants', 'QrSlug') IS NULL
+            ALTER TABLE dbo.Restaurants ADD QrSlug NVARCHAR(120) NULL;
+        """,
+        """
+        IF OBJECT_ID(N'dbo.Restaurants', N'U') IS NOT NULL
+           AND NOT EXISTS (
+                SELECT 1
+                FROM sys.indexes
+                WHERE name = 'IX_Restaurants_QrSlug'
+                  AND object_id = OBJECT_ID(N'dbo.Restaurants')
+           )
+            CREATE UNIQUE INDEX IX_Restaurants_QrSlug ON dbo.Restaurants(QrSlug)
+            WHERE QrSlug IS NOT NULL;
+        """,
+        """
+        IF OBJECT_ID(N'dbo.ListenLogs', N'U') IS NOT NULL
+           AND COL_LENGTH('dbo.ListenLogs', 'AnonymousSessionId') IS NULL
+            ALTER TABLE dbo.ListenLogs ADD AnonymousSessionId NVARCHAR(64) NULL;
+        """,
+        """
+        IF OBJECT_ID(N'dbo.ListenLogs', N'U') IS NOT NULL
+           AND NOT EXISTS (
+                SELECT 1
+                FROM sys.indexes
+                WHERE name = 'IX_ListenLogs_AnonymousSessionId'
+                  AND object_id = OBJECT_ID(N'dbo.ListenLogs')
+           )
+            CREATE INDEX IX_ListenLogs_AnonymousSessionId ON dbo.ListenLogs(AnonymousSessionId);
+        """,
+        """
+        IF OBJECT_ID(N'dbo.QrScanLogs', N'U') IS NULL
+        CREATE TABLE dbo.QrScanLogs (
+            Id INT IDENTITY(1,1) NOT NULL CONSTRAINT PK_QrScanLogs PRIMARY KEY,
+            RestaurantId INT NOT NULL,
+            QrCode NVARCHAR(200) NOT NULL,
+            DevicePlatform NVARCHAR(32) NOT NULL CONSTRAINT DF_QrScanLogs_DevicePlatform DEFAULT N'unknown',
+            AnonymousSessionId NVARCHAR(64) NULL,
+            ScannedAt DATETIME2 NOT NULL CONSTRAINT DF_QrScanLogs_ScannedAt DEFAULT SYSUTCDATETIME(),
+            CONSTRAINT FK_QrScanLogs_Restaurants_RestaurantId
+                FOREIGN KEY (RestaurantId) REFERENCES dbo.Restaurants(Id) ON DELETE CASCADE
+        );
+        """,
+        """
+        IF OBJECT_ID(N'dbo.QrScanLogs', N'U') IS NOT NULL
+           AND NOT EXISTS (
+                SELECT 1
+                FROM sys.indexes
+                WHERE name = 'IX_QrScanLogs_ScannedAt'
+                  AND object_id = OBJECT_ID(N'dbo.QrScanLogs')
+           )
+            CREATE INDEX IX_QrScanLogs_ScannedAt ON dbo.QrScanLogs(ScannedAt);
+        """,
+        """
+        IF OBJECT_ID(N'dbo.QrScanLogs', N'U') IS NOT NULL
+           AND NOT EXISTS (
+                SELECT 1
+                FROM sys.indexes
+                WHERE name = 'IX_QrScanLogs_RestaurantId'
+                  AND object_id = OBJECT_ID(N'dbo.QrScanLogs')
+           )
+            CREATE INDEX IX_QrScanLogs_RestaurantId ON dbo.QrScanLogs(RestaurantId);
+        """,
+        """
+        IF OBJECT_ID(N'dbo.QrScanLogs', N'U') IS NOT NULL
+           AND NOT EXISTS (
+                SELECT 1
+                FROM sys.indexes
+                WHERE name = 'IX_QrScanLogs_AnonymousSessionId'
+                  AND object_id = OBJECT_ID(N'dbo.QrScanLogs')
+           )
+            CREATE INDEX IX_QrScanLogs_AnonymousSessionId ON dbo.QrScanLogs(AnonymousSessionId);
+        """
+    ];
 
     private static readonly string[] LegacyCompatibilityScripts =
     [

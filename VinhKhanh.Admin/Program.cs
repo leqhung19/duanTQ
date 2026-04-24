@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.StaticFiles;
 using VinhKhanh.Admin.Data;
 using VinhKhanh.Admin.Services;
 
@@ -39,6 +41,7 @@ builder.Services.AddScoped<RestaurantService>();
 builder.Services.AddScoped<SyncService>();
 builder.Services.AddScoped<TranslationService>();
 builder.Services.AddScoped<AudioService>();
+builder.Services.AddScoped<ActiveSessionService>();
 
 // Dọn session chết mỗi 2 phút
 builder.Services.AddHostedService<SessionCleanupService>();
@@ -48,6 +51,12 @@ builder.Services.AddCors(o => o.AddPolicy("MobileApp", p =>
     p.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
 
 var app = builder.Build();
+var sampleImagePath = Path.GetFullPath(Path.Combine(
+    builder.Environment.ContentRootPath,
+    "..",
+    "DoAn",
+    "Resources",
+    "Images"));
 
 // Khoi tao DB va seed Admin mac dinh
 using (var scope = app.Services.CreateScope())
@@ -56,7 +65,21 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("MobileApp");
-app.UseStaticFiles();
+var staticFileContentTypes = new FileExtensionContentTypeProvider();
+staticFileContentTypes.Mappings[".apk"] = "application/vnd.android.package-archive";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticFileContentTypes
+});
+if (Directory.Exists(sampleImagePath))
+{
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new PhysicalFileProvider(sampleImagePath),
+        RequestPath = "/images"
+    });
+}
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

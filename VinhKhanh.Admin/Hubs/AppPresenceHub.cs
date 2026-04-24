@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using VinhKhanh.Admin.Data;
 using VinhKhanh.Admin.Models;
+using VinhKhanh.Admin.Services;
 
 namespace VinhKhanh.Admin.Hubs;
 
@@ -18,17 +19,19 @@ public class AppPresenceHub : Hub
         var lang = Context.GetHttpContext()
             ?.Request.Headers["X-Language"].ToString() ?? "vi";
 
+        var now = PresenceClock.Now();
+
         _db.ActiveSessions.Add(new ActiveSession
         {
             ConnectionId = Context.ConnectionId,
             DevicePlatform = platform,
             Language = lang,
-            ConnectedAt = DateTime.Now,
-            LastPing = DateTime.Now,
+            ConnectedAt = now,
+            LastPing = now,
         });
         await _db.SaveChangesAsync();
 
-        var deadline = DateTime.Now.AddMinutes(-3);
+        var deadline = now.AddMinutes(-3);
         var count = await _db.ActiveSessions.CountAsync(s => s.LastPing >= deadline);
         await Clients.All.SendAsync("ActiveUsersUpdated", count);
         await base.OnConnectedAsync();
@@ -40,7 +43,7 @@ public class AppPresenceHub : Hub
             .FirstOrDefaultAsync(s => s.ConnectionId == Context.ConnectionId);
         if (s is not null) { _db.ActiveSessions.Remove(s); await _db.SaveChangesAsync(); }
 
-        var deadline = DateTime.Now.AddMinutes(-3);
+        var deadline = PresenceClock.Now().AddMinutes(-3);
         var count = await _db.ActiveSessions.CountAsync(s => s.LastPing >= deadline);
         await Clients.All.SendAsync("ActiveUsersUpdated", count);
         await base.OnDisconnectedAsync(ex);
@@ -50,6 +53,10 @@ public class AppPresenceHub : Hub
     {
         var s = await _db.ActiveSessions
             .FirstOrDefaultAsync(x => x.ConnectionId == Context.ConnectionId);
-        if (s is not null) { s.LastPing = DateTime.Now; await _db.SaveChangesAsync(); }
+        if (s is not null)
+        {
+            s.LastPing = PresenceClock.Now();
+            await _db.SaveChangesAsync();
+        }
     }
 }

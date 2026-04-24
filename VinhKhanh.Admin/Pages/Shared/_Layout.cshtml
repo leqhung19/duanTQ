@@ -191,6 +191,11 @@
                     <span class="label">Điểm POI</span>
                 </a>
 
+                <a class="nav-item-sb @(ViewData["ActivePage"]?.ToString() == "Map" ? "active" : "")" asp-page="/Map/Index">
+                    <span class="icon">🗺️</span>
+                    <span class="label">Bản đồ</span>
+                </a>
+
                 <a class="nav-item-sb @(ViewData["ActivePage"]?.ToString() == "Qr" ? "active" : "")" asp-page="/Qr/Index">
                     <span class="icon">▦</span>
                     <span class="label">Mã QR</span>

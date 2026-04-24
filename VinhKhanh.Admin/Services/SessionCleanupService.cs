@@ -1,9 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using VinhKhanh.Admin.Data;
-
 namespace VinhKhanh.Admin.Services;
 
-// Chạy nền mỗi 2 phút — xóa session không ping trong 3 phút (app crash)
+// Chạy nền ngắn nhịp để dashboard phản ứng nhanh khi app vào/ra.
 public class SessionCleanupService : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -22,21 +19,15 @@ public class SessionCleanupService : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             using var scope = _scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var activeSessions = scope.ServiceProvider.GetRequiredService<ActiveSessionService>();
+            var deleted = await activeSessions.CleanupExpiredSessionsAsync(stoppingToken);
 
-            var deadline = DateTime.Now.AddMinutes(-3); // Không ping trong 3 phút = chết
-            var dead = await db.ActiveSessions
-                .Where(s => s.LastPing < deadline)
-                .ToListAsync(stoppingToken);
-
-            if (dead.Count > 0)
+            if (deleted > 0)
             {
-                db.ActiveSessions.RemoveRange(dead);
-                await db.SaveChangesAsync(stoppingToken);
-                _logger.LogInformation("Đã dọn {Count} session chết", dead.Count);
+                _logger.LogInformation("Đã dọn {Count} session chết", deleted);
             }
 
-            await Task.Delay(TimeSpan.FromMinutes(2), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
         }
     }
 }

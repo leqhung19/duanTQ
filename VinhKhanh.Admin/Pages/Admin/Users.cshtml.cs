@@ -32,7 +32,7 @@ public class UsersModel : PageModel
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            TempData["Error"] = "Vui long nhap email va mat khau.";
+            TempData["Error"] = "Vui lòng nhập tên và mật khẩu";
             return RedirectToPage();
         }
 
@@ -42,7 +42,7 @@ public class UsersModel : PageModel
             if (!await _userManager.IsInRoleAsync(existing, "Admin"))
                 await _userManager.AddToRoleAsync(existing, "Admin");
 
-            TempData["Message"] = $"Da cap quyen Admin cho {email}.";
+            TempData["Message"] = $"Đã cấp quyền cho Admin {email}.";
             return RedirectToPage();
         }
 
@@ -61,7 +61,7 @@ public class UsersModel : PageModel
         }
 
         await _userManager.AddToRoleAsync(user, "Admin");
-        TempData["Message"] = $"Da tao tai khoan admin {email}.";
+        TempData["Message"] = $"Đã tạo tài khoản Admin {email}.";
         return RedirectToPage();
     }
 
@@ -73,19 +73,19 @@ public class UsersModel : PageModel
 
         if (string.Equals(user.Email, DefaultAdminEmail, StringComparison.OrdinalIgnoreCase))
         {
-            TempData["Error"] = "Khong the xoa tai khoan admin mac dinh.";
+            TempData["Error"] = "Không thể xóa admin mặc định";
             return RedirectToPage();
         }
 
         var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
         if (adminUsers.Count <= 1)
         {
-            TempData["Error"] = "Can giu lai it nhat mot tai khoan admin.";
+            TempData["Error"] = "Cần ít nhất một Admin";
             return RedirectToPage();
         }
 
         await _userManager.DeleteAsync(user);
-        TempData["Message"] = "Da xoa tai khoan admin.";
+        TempData["Message"] = "Đã xóa Tài Khoản";
         return RedirectToPage();
     }
 

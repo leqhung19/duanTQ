@@ -29,23 +29,28 @@
     </div>
     <div class="col-6 col-lg-4">
         <div class="card border-0 shadow-sm p-3">
-            <div class="text-muted small">Có ảnh QR</div>
+            <div class="text-muted small">Có ảnh QR tự tải lên</div>
             <div class="fs-3 fw-bold text-success">@Model.PoiWithQrImage</div>
         </div>
     </div>
     <div class="col-6 col-lg-4">
         <div class="card border-0 shadow-sm p-3">
-            <div class="text-muted small">Chưa có ảnh QR</div>
-            <div class="fs-3 fw-bold text-warning">@Model.PoiWithoutQrImage</div>
+            <div class="text-muted small">Dùng QR tự sinh</div>
+            <div class="fs-3 fw-bold text-info">@Model.PoiWithoutQrImage</div>
         </div>
     </div>
 </div>
 
-<div class="mb-3">
-    <h5 class="mb-1">Ảnh QR của POI</h5>
-    <div class="text-muted small">
-        Mỗi POI chỉ lưu ảnh QR dùng để dán tại địa điểm. Khi cần đổi mã, chọn ảnh QR mới rồi lưu lại.
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+    <div>
+        <h5 class="mb-1">Mã QR của POI</h5>
+        <div class="text-muted small">
+            Mỗi POI có một mã QR riêng để du khách mở đúng điểm thuyết minh.
+        </div>
     </div>
+    <form method="post" asp-page-handler="Refresh">
+        <button class="btn btn-success">Cập nhật URL QR theo domain hiện tại</button>
+    </form>
 </div>
 
 <div class="row g-3">
@@ -56,19 +61,13 @@
                 <div class="card-body">
                     <div class="row g-3 align-items-start">
                         <div class="col-md-4">
-                            @if (item.HasQrImage)
-                            {
-                                <img src="@item.QrImagePath"
-                                     alt="QR @item.PoiName"
-                                     class="img-fluid"
-                                     style="max-width:220px;width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:white;" />
-                            }
-                            else
-                            {
-                                <div style="width:100%;max-width:220px;aspect-ratio:1;border:1px dashed #cbd5e1;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;color:#64748b;font-size:.9rem;background:#f8fafc;">
-                                    Chưa có ảnh QR
-                                </div>
-                            }
+                            <img src="@(item.HasQrImage ? item.QrImagePath : item.QrImageUrl)"
+                                 alt="QR @item.PoiName"
+                                 class="img-fluid"
+                                 style="max-width:220px;width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:8px;background:white;" />
+                            <div class="text-muted small mt-2">
+                                @(item.HasQrImage ? "Ảnh QR đã tải lên" : "QR tự sinh từ URL public")
+                            </div>
                         </div>
 
                         <div class="col-md-8">
@@ -79,20 +78,26 @@
                                         @(!string.IsNullOrWhiteSpace(item.Address) ? item.Address : "Chưa có địa chỉ")
                                     </div>
                                 </div>
-                                <span class="badge @(item.HasQrImage ? "bg-success" : "bg-secondary")">
-                                    @(item.HasQrImage ? "Có ảnh QR" : "Chưa có ảnh")
+                                <span class="badge @(item.PoiIsActive ? "bg-success" : "bg-secondary")">
+                                    @(item.PoiIsActive ? "Đang hoạt động" : "Đã tắt")
                                 </span>
+                            </div>
+
+                            <label class="form-label small text-muted mb-1">URL để tạo/in QR</label>
+                            <div class="input-group input-group-sm mb-3">
+                                <input class="form-control" value="@item.QrContent" readonly />
+                                <a class="btn btn-outline-secondary" href="@item.QrContent" target="_blank">Mở</a>
                             </div>
 
                             <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
                                 <input type="hidden" name="restaurantId" value="@item.PoiId" />
-                                <label class="form-label small text-muted mb-1">Thay đổi ảnh QR</label>
+                                <label class="form-label small text-muted mb-1">Tùy chọn: tải ảnh QR tự thiết kế</label>
                                 <div class="input-group input-group-sm">
                                     <input class="form-control" type="file" name="qrImage" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" required />
                                     <button class="btn btn-success">Lưu ảnh</button>
                                 </div>
                                 <div class="form-text">
-                                    Hỗ trợ PNG, JPG, JPEG, WEBP.
+                                    Nếu không tải ảnh riêng, hệ thống vẫn hiển thị QR tự sinh từ URL public ở trên.
                                 </div>
                             </form>
                         </div>

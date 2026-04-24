@@ -36,3 +36,15 @@ TestResults/
 Thumbs.db
 desktop.ini
 .DS_Store
+
+# Local app configuration with secrets
+**/appsettings.json
+**/appsettings.Development.json
+!**/appsettings.example.json
+
+# Publish artifacts / APK binaries
+publish/
+build-check/
+*.apk
+**/wwwroot/downloads/*.apk
+**/wwwroot/qr/
