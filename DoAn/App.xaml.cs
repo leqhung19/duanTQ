@@ -10,6 +10,7 @@ namespace DoAn
             InitializeComponent();
             MainPage = new AppShell();
             PresenceService.Instance.Start();
+            _ = PresenceService.Instance.RefreshAsync();
 
             // Lắng nghe sự kiện POI
             POIService.Instance.OnPOIEntered += async (poi) =>
@@ -21,6 +22,25 @@ namespace DoAn
             };
         }
 
+        protected override Window CreateWindow(IActivationState? activationState)
+        {
+            var window = base.CreateWindow(activationState);
+
+            window.Activated += (_, _) =>
+            {
+                PresenceService.Instance.Start();
+                _ = PresenceService.Instance.RefreshAsync();
+            };
+
+            window.Resumed += (_, _) =>
+            {
+                PresenceService.Instance.Start();
+                _ = PresenceService.Instance.RefreshAsync();
+            };
+
+            return window;
+        }
+
         protected override async void OnAppLinkRequestReceived(Uri uri)
         {
             base.OnAppLinkRequestReceived(uri);
@@ -29,19 +49,33 @@ namespace DoAn
 
         private static async Task OpenPoiFromDeepLinkAsync(Uri uri)
         {
-            var local = await DatabaseService.Instance.GetByDeepLinkAsync(uri);
-            if (local is null) return;
+            var apiBaseUrl = GetQueryValue(uri, "api");
+            if (!string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                RestaurantService.Instance.SetPreferredBaseUrl(apiBaseUrl);
+                PresenceService.Instance.SetPreferredBaseUrl(apiBaseUrl);
+            }
 
-            var restaurant = local.ToRestaurant();
-            restaurant.AudioFiles = (await DatabaseService.Instance.GetAudioFilesAsync(local.Id))
-                .Select(a => new DoAn.FRONTEND.Models.RestaurantAudioFile
-                {
-                    Id = a.Id,
-                    Language = a.Language,
-                    Url = a.Url,
-                    FileSizeBytes = a.FileSizeBytes
-                })
-                .ToList();
+            var restaurant = TryGetPoiId(uri, out var poiId)
+                ? await RestaurantService.Instance.GetByIdAsync(poiId)
+                : null;
+
+            if (restaurant is null)
+            {
+                var local = await DatabaseService.Instance.GetByDeepLinkAsync(uri);
+                if (local is null) return;
+
+                restaurant = local.ToRestaurant();
+                restaurant.AudioFiles = (await DatabaseService.Instance.GetAudioFilesAsync(local.Id))
+                    .Select(a => new DoAn.FRONTEND.Models.RestaurantAudioFile
+                    {
+                        Id = a.Id,
+                        Language = a.Language,
+                        Url = a.Url,
+                        FileSizeBytes = a.FileSizeBytes
+                    })
+                    .ToList();
+            }
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
@@ -53,6 +87,37 @@ namespace DoAn
                     POIService.Instance.CurrentLang,
                     "qr");
             });
+        }
+
+        private static bool TryGetPoiId(Uri uri, out int poiId)
+        {
+            poiId = 0;
+
+            if (string.Equals(uri.Scheme, "doan", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(uri.Host, "restaurant", StringComparison.OrdinalIgnoreCase))
+            {
+                return int.TryParse(uri.AbsolutePath.Trim('/'), out poiId);
+            }
+
+            var segments = uri.AbsolutePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            return segments.Length >= 2
+                && string.Equals(segments[0], "q", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(segments[1], out poiId);
+        }
+
+        private static string? GetQueryValue(Uri uri, string key)
+        {
+            var query = uri.Query.TrimStart('?');
+            if (string.IsNullOrWhiteSpace(query)) return null;
+
+            foreach (var part in query.Split('&', StringSplitOptions.RemoveEmptyEntries))
+            {
+                var pair = part.Split('=', 2);
+                if (pair.Length == 2 && string.Equals(pair[0], key, StringComparison.OrdinalIgnoreCase))
+                    return Uri.UnescapeDataString(pair[1].Replace("+", " "));
+            }
+
+            return null;
         }
     }
 }

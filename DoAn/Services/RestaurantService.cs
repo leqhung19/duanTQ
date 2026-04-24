@@ -10,7 +10,7 @@ namespace DoAn.Services
 
         private readonly HttpClient _httpClient;
         private List<Restaurant> _cache = new();
-        private string _activeBaseUrl = "http://10.0.2.2:5143/api/";
+        private string _activeBaseUrl;
 
         // Thu tu uu tien:
         // 10.0.2.2: Android emulator goi web admin tren cung may.
@@ -18,6 +18,7 @@ namespace DoAn.Services
         // IP LAN: dien thoai that cung Wi-Fi voi may chay web admin.
         private static readonly string[] BaseUrls =
         [
+            "http://vinh-khanh.somee.com/api/",
             "http://10.0.2.2:5143/api/",
             "http://localhost:5143/api/",
             "http://10.93.119.86:5143/api/"
@@ -29,6 +30,15 @@ namespace DoAn.Services
             {
                 Timeout = TimeSpan.FromSeconds(10)
             };
+            _activeBaseUrl = NormalizeBaseUrl(Preferences.Get("ApiBaseUrl", "http://vinh-khanh.somee.com/api/"));
+        }
+
+        public void SetPreferredBaseUrl(string? apiBaseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(apiBaseUrl)) return;
+
+            _activeBaseUrl = NormalizeBaseUrl(apiBaseUrl);
+            Preferences.Set("ApiBaseUrl", _activeBaseUrl);
         }
 
         public async Task<List<Restaurant>> GetAllAsync()
@@ -89,7 +99,8 @@ namespace DoAn.Services
                     restaurantId,
                     language = ToServerLanguage(language),
                     audioSource,
-                    triggerType
+                    triggerType,
+                    sessionId = PresenceService.Instance.SessionId
                 });
             }
             catch (Exception ex)
@@ -158,6 +169,15 @@ namespace DoAn.Services
             "en" => "en",
             _ => "vi"
         };
+
+        private static string NormalizeBaseUrl(string value)
+        {
+            var normalized = value.Trim();
+            if (!normalized.EndsWith('/'))
+                normalized += "/";
+
+            return normalized;
+        }
 
         private List<Restaurant> GetMockData() => new()
         {

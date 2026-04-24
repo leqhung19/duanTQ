@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 
 namespace DoAn.Services
 {
@@ -14,10 +14,12 @@ namespace DoAn.Services
 
         private readonly string _sessionId;
         private CancellationTokenSource? _cts;
-        private string _activeBaseUrl = "http://10.0.2.2:5143/api/";
+        private Task? _pingLoopTask;
+        private string _activeBaseUrl;
 
         private static readonly string[] BaseUrls =
         [
+            "http://vinh-khanh.somee.com/api/",
             "http://10.0.2.2:5143/api/",
             "http://localhost:5143/api/",
             "http://10.93.119.86:5143/api/"
@@ -25,6 +27,7 @@ namespace DoAn.Services
 
         private PresenceService()
         {
+            _activeBaseUrl = NormalizeBaseUrl(Preferences.Get("ApiBaseUrl", "http://vinh-khanh.somee.com/api/"));
             _sessionId = Preferences.Get("AnonymousSessionId", "");
             if (string.IsNullOrWhiteSpace(_sessionId))
             {
@@ -33,34 +36,60 @@ namespace DoAn.Services
             }
         }
 
+        public string SessionId => _sessionId;
+
+        public void SetPreferredBaseUrl(string? apiBaseUrl)
+        {
+            if (string.IsNullOrWhiteSpace(apiBaseUrl)) return;
+
+            _activeBaseUrl = NormalizeBaseUrl(apiBaseUrl);
+            Preferences.Set("ApiBaseUrl", _activeBaseUrl);
+        }
+
         public void Start()
         {
-            if (_cts is not null) return;
+            if (_pingLoopTask is { IsCompleted: false })
+            {
+                _ = RefreshAsync();
+                return;
+            }
 
+            _cts?.Dispose();
             _cts = new CancellationTokenSource();
-            _ = Task.Run(() => PingLoopAsync(_cts.Token));
+            _pingLoopTask = Task.Run(() => PingLoopAsync(_cts.Token));
         }
 
         public void Stop()
         {
             _cts?.Cancel();
+            _cts?.Dispose();
             _cts = null;
+            _pingLoopTask = null;
         }
+
+        public Task RefreshAsync() => PingOnceAsync();
 
         private async Task PingLoopAsync(CancellationToken token)
         {
-            while (!token.IsCancellationRequested)
+            try
             {
-                await PingOnceAsync();
+                while (!token.IsCancellationRequested)
+                {
+                    await PingOnceAsync();
 
-                try
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(60), token);
+                    try
+                    {
+                        await Task.Delay(TimeSpan.FromSeconds(10), token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
+            }
+            finally
+            {
+                _pingLoopTask = null;
             }
         }
 
@@ -90,5 +119,15 @@ namespace DoAn.Services
                 }
             }
         }
+
+        private static string NormalizeBaseUrl(string value)
+        {
+            var normalized = value.Trim();
+            if (!normalized.EndsWith('/'))
+                normalized += "/";
+
+            return normalized;
+        }
     }
 }
+

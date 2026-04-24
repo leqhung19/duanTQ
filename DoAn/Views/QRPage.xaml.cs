@@ -34,6 +34,7 @@ namespace DoAn.Views
             _isProcessing = false;
         }
 
+        [Obsolete]
         private async void OnBarcodesDetected(object? sender, BarcodeDetectionEventArgs e)
         {
             if (_isProcessing) return;
