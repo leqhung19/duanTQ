@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0'>
+    <title>Bản đồ</title>
+    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* Nút vị trí hiện tại */
+        #locateBtn {
+            position: absolute;
+            bottom: 30px;
+            right: 15px;
+            z-index: 1000;
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        #status {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id='map'></div>
+    <div id='status'>Đang lấy vị trí...</div>
+    <button id='locateBtn' onclick='locateMe()'>📍</button>
+
+    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+    <script>
+        // Tọa độ mặc định — Vĩnh Khánh
+        var defaultLat = 10.761830;
+        var defaultLng = 106.701832;
+        var userMarker = null;
+        var userCircle = null;
+
+        var map = L.map('map', {
+            zoomControl: true,
+            attributionControl: false
+        }).setView([defaultLat, defaultLng], 15);
+
+        // CartoDB tile — cache tốt, không bị block
+        var tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            subdomains: 'abcd',
+            maxZoom: 19,
+            // Leaflet tự cache tile trong browser cache
+        }).addTo(map);
+
+        // ============ NHẬN TỌA ĐỘ TỪ MAUI ============
+        function setLocation(lat, lng, accuracy) {
+            document.getElementById('status').style.display = 'none';
+
+            // Xóa marker cũ
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
+
+            // Vẽ vị trí hiện tại
+            userMarker = L.circleMarker([lat, lng], {
+                radius: 8,
+                color: '#fff',
+                weight: 3,
+                fillColor: '#2196F3',
+                fillOpacity: 1
+            }).addTo(map).bindPopup('📍 Vị trí của bạn').openPopup();
+
+            // Vòng tròn độ chính xác
+            userCircle = L.circle([lat, lng], {
+                radius: accuracy,
+                color: '#2196F3',
+                fillColor: '#2196F3',
+                fillOpacity: 0.1,
+                weight: 1
+            }).addTo(map);
+
+            map.setView([lat, lng], 16);
+        }
+
+        // ============ THÊM MARKER QUÁN ĂN ============
+        function addRestaurantMarker(lat, lng, name, address) {
+            var marker = L.marker([lat, lng]).addTo(map);
+            marker.bindPopup('<b>' + name + '</b><br>' + address);
+            return marker;
+        }
+
+        // ============ FOCUS VÀO QUÁN CỤ THỂ ============
+        function focusRestaurant(lat, lng, name) {
+            map.setView([lat, lng], 17);
+            var m = L.marker([lat, lng]).addTo(map);
+            m.bindPopup('<b>' + name + '</b>').openPopup();
+        }
+
+        // ============ NÚT LOCATE ============
+        function locateMe() {
+            document.getElementById('status').style.display = 'block';
+            // Gọi MAUI để lấy GPS
+            if (window.webkit && window.webkit.messageHandlers) {
+                window.webkit.messageHandlers.locationHandler.postMessage('locate');
+            } else {
+                // Fallback browser geolocation
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    setLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+                }, function() {
+                    document.getElementById('status').style.display = 'none';
+                });
+            }
+        }
+
+        // Thêm các quán ăn mặc định
+        addRestaurantMarker(10.7600, 106.7020, 'Ốc Oanh', 'Vĩnh Khánh, Q4');
+    </script>
+</body>
+</html>

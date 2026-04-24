@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="DoAn.Views.DetailPage"
+             Title="Chi tiết">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="0">
+
+            <!-- ẢNH -->
+            <Image x:Name="RestaurantImage"
+                   HeightRequest="220"
+                   Aspect="AspectFill"/>
+
+            <!-- THÔNG TIN -->
+            <VerticalStackLayout Padding="16" Spacing="8" BackgroundColor="White">
+                <Label x:Name="NameLabel"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="#212121"/>
+                <HorizontalStackLayout Spacing="6">
+                    <Label Text="🕐" FontSize="14"/>
+                    <Label x:Name="OpenTimeLabel" FontSize="14" TextColor="#757575"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <Label Text="📍" FontSize="14"/>
+                    <Label x:Name="AddressLabel" FontSize="14" TextColor="#757575"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <Label Text="📞" FontSize="14"/>
+                    <Label x:Name="PhoneLabel" FontSize="14" TextColor="#757575"/>
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="6">
+                    <Label Text="💰" FontSize="14"/>
+                    <Label x:Name="PriceRangeLabel" FontSize="14"
+                           TextColor="#4CAF50" FontAttributes="Bold"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="8" BackgroundColor="#F5F5F5"/>
+
+            <!-- NGÔN NGỮ -->
+            <VerticalStackLayout Padding="16,12" Spacing="8" BackgroundColor="#F5F5F5">
+                <Label Text="Ngôn ngữ / Language" FontSize="13" TextColor="#757575"/>
+                <HorizontalStackLayout Spacing="8">
+                    <Button x:Name="BtnVi" Text="🇻🇳 VI" Clicked="OnVietnameseClicked"
+                            BackgroundColor="#FF5722" TextColor="White"
+                            CornerRadius="15" HeightRequest="34" FontSize="12"/>
+                    <Button x:Name="BtnEn" Text="🇺🇸 EN" Clicked="OnEnglishClicked"
+                            BackgroundColor="#E0E0E0" TextColor="#212121"
+                            CornerRadius="15" HeightRequest="34" FontSize="12"/>
+                    <Button x:Name="BtnKr" Text="🇰🇷 KR" Clicked="OnKoreanClicked"
+                            BackgroundColor="#E0E0E0" TextColor="#212121"
+                            CornerRadius="15" HeightRequest="34" FontSize="12"/>
+                    <Button x:Name="BtnCn" Text="🇨🇳 CN" Clicked="OnChineseClicked"
+                            BackgroundColor="#E0E0E0" TextColor="#212121"
+                            CornerRadius="15" HeightRequest="34" FontSize="12"/>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="8" BackgroundColor="#F5F5F5"/>
+
+            <!-- MÔ TẢ -->
+            <VerticalStackLayout Padding="16" Spacing="10" BackgroundColor="White">
+                <Label Text="Giới thiệu" FontSize="16"
+                       FontAttributes="Bold" TextColor="#212121"/>
+                <Label x:Name="DescriptionLabel"
+                       FontSize="14" TextColor="#424242"
+                       LineBreakMode="WordWrap"/>
+                <Button Text="🔊 Nghe mô tả"
+                        Clicked="OnPlayAudioClicked"
+                        BackgroundColor="#E3F2FD"
+                        TextColor="#1976D2"
+                        CornerRadius="8"
+                        HeightRequest="42"
+                        FontSize="13"/>
+            </VerticalStackLayout>
+
+            <BoxView HeightRequest="8" BackgroundColor="#F5F5F5"/>
+
+            <!-- NÚT XEM BẢN ĐỒ -->
+            <Button Text="📍 Xem trên bản đồ"
+                    Clicked="OnViewMapClicked"
+                    BackgroundColor="#FF5722"
+                    TextColor="White"
+                    CornerRadius="10"
+                    Margin="16"
+                    HeightRequest="50"/>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

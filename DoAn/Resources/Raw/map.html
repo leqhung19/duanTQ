@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <meta name='viewport' content='width=device-width,initial-scale=1.0'>
+    <link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+
+        .poi-icon {
+            background: #FF5722;
+            border: 3px solid white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+        }
+
+            .poi-icon.nearest {
+                background: #FF1744;
+                border: 3px solid #FF1744;
+                width: 42px;
+                height: 42px;
+                font-size: 22px;
+                box-shadow: 0 0 0 6px rgba(255,23,68,0.25);
+                animation: pulse 1.5s infinite;
+            }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255,23,68,0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(255,23,68,0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255,23,68,0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id='map'></div>
+    <script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>
+    <script>
+        var map = L.map('map').setView([10.761714, 106.702118], 15);
+
+        // Tự động lấy GPS ngay khi map load xong
+        map.whenReady(function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+                    var acc = pos.coords.accuracy;
+                    updateUserLocation(lat, lng, acc);
+                    map.setView([lat, lng], 16);
+                });
+            }
+        });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+
+  var pois = POIS_PLACEHOLDER;
+  var poiMarkers = {};
+  var currentNearestId = -1;
+
+  function createPOIIcon(isNearest) {
+    return L.divIcon({
+      className: '',
+      html: '<div class="poi-icon' + (isNearest ? ' nearest' : '') + '">🍽</div>',
+      iconSize: isNearest ? [42,42] : [32,32],
+      iconAnchor: isNearest ? [21,42] : [16,32]
+    });
+  }
+
+  pois.forEach(function(poi) {
+    var marker = L.marker([poi.lat, poi.lng], {
+      icon: createPOIIcon(false)
+    }).addTo(map);
+
+    marker.on('click', function() {
+      window.location = 'poi://restaurant/' + poi.id;
+    });
+
+    poiMarkers[poi.id] = marker;
+  });
+
+  function highlightNearestPOI(id) {
+    if (currentNearestId === id) return;
+    if (currentNearestId !== -1 && poiMarkers[currentNearestId]) {
+      poiMarkers[currentNearestId].setIcon(createPOIIcon(false));
+    }
+    if (poiMarkers[id]) {
+      poiMarkers[id].setIcon(createPOIIcon(true));
+      poiMarkers[id].setZIndexOffset(1000);
+      currentNearestId = id;
+    }
+  }
+
+  var userMarker = null, userCircle = null;
+
+  function updateUserLocation(lat, lng, accuracy) {
+    if (userMarker) map.removeLayer(userMarker);
+    if (userCircle) map.removeLayer(userCircle);
+    userMarker = L.circleMarker([lat, lng], {
+      radius: 8, color: '#fff', weight: 3,
+      fillColor: '#2196F3', fillOpacity: 1,
+      zIndexOffset: 2000
+    }).addTo(map).bindPopup('📍 Vị trí của bạn');
+    userCircle = L.circle([lat, lng], {
+      radius: accuracy, color: '#2196F3',
+      fillColor: '#2196F3', fillOpacity: 0.1, weight: 1
+    }).addTo(map);
+  }
+
+  function flyToUser(lat, lng) {
+    map.flyTo([lat, lng], 17, { animate: true, duration: 1.5 });
+    if (userMarker) userMarker.openPopup();
+  }
+    </script>
+</body>
+</html>
